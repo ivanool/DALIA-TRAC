@@ -1,12 +1,12 @@
+use chrono::{Local, Datelike, Timelike};
 use postgres::Client;
 use reqwest::blocking::Client as HttpClient;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
+use tauri::command;
 
-fn parse_json(s: Option<String>) -> Option<serde_json::Value> {
-    s.and_then(|json_str| serde_json::from_str(&json_str).ok())
-}
+// --- Structs ---
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Emisora {
@@ -24,6 +24,134 @@ pub struct Emisora {
     #[serde(rename = "rangos_financieros")]
     pub rangos_financieros: Option<serde_json::Value>,
     pub dividendos: Option<serde_json::Value>,
+}
+
+#[derive(Debug)]
+pub struct Cotizacion {
+    pub simbolo: String,
+    pub ultimo_precio: Option<f64>,
+    pub precio_promedio: Option<f64>,
+    pub volumen: Option<f64>,
+    pub fecha: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TopImporte {
+    pub e: String,
+    pub i: f64,
+    pub u: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TopCambio {
+    pub c: f64,
+    pub e: String,
+    pub f: String,
+    pub u: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TopOperaciones {
+    pub e: String,
+    pub o: i64,
+    pub u: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TopVolumen {
+    pub e: String,
+    pub i: f64,
+    pub u: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TopResponse {
+    pub importe: Vec<TopImporte>,
+    pub bajan: Vec<TopCambio>,
+    pub operaciones: Vec<TopOperaciones>,
+    pub suben: Vec<TopCambio>,
+    pub volumen: Vec<TopVolumen>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ForexResponse {
+    pub t: String,
+    pub USDMXN: Option<ForexItem>,
+    pub EURMXN: Option<ForexItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ForexItem {
+    pub c: f64,
+    pub m: f64,
+    pub u: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct IndiceItem {
+    pub a: f64,
+    pub c: f64,
+    pub e: String,
+    pub f: String,
+    pub m: f64,
+    pub n: f64,
+    pub u: f64,
+    pub v: f64,
+    pub x: f64,
+    pub ytdp: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct IndicesResponse {
+    pub SP500: Option<IndiceItem>,
+    pub FTSEBIVA: Option<IndiceItem>,
+    pub IPC: Option<IndiceItem>,
+    pub DJIA: Option<IndiceItem>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TasaItem {
+    pub f: String,
+    pub t: f64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TasasResponse {
+    pub CETE364: Option<TasaItem>,
+    pub TIIE91: Option<TasaItem>,
+    pub TIIE182: Option<TasaItem>,
+    pub CETE182: Option<TasaItem>,
+    pub CETE28: Option<TasaItem>,
+    pub TIIEFB: Option<TasaItem>,
+    pub TIIE28: Option<TasaItem>,
+    #[serde(rename = "CETE 91")]
+    pub CETE_91: Option<TasaItem>,
+    pub Tasa_Objetivo: Option<TasaItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EmisoraBusqueda {
+    pub razon_social: String,
+    pub emisoras: String, // ticker
+    pub serie: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SimpleTopChange {
+    pub e: String, // ticker
+    pub c: f64,    // cambio porcentual
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SimpleTopResponse {
+    pub suben: Vec<SimpleTopChange>,
+    pub bajan: Vec<SimpleTopChange>,
+}
+
+// --- Funciones ---
+
+fn parse_json(s: Option<String>) -> Option<serde_json::Value> {
+    s.and_then(|json_str| serde_json::from_str(&json_str).ok())
 }
 
 pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
@@ -46,7 +174,6 @@ pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Erro
                     println!("Emisora deserializada: {:?}", emisora);
                     let serie = String::new();
 
-                    // Convertir campos JSON a Option<String>
                     let rangos_historicos_str = emisora.rangos_historicos
                         .as_ref()
                         .map(serde_json::to_string)
@@ -183,10 +310,7 @@ fn construir_url_intradia(emisoras: &[&str], inicio: &str, final_: &str) -> Resu
         emisoras_str, inicio, final_
     );
     Ok(url)
-
-
 }
-
 
 pub fn get_intradia(emi: &[&str], ini: &str, fin: &str, pg_client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
     let url = construir_url_intradia(emi, ini, fin)?;
@@ -228,40 +352,110 @@ pub fn get_intradia(emi: &[&str], ini: &str, fin: &str, pg_client: &mut Client) 
     Ok(())
 }
 
-pub fn get_cotizaciones(emisora: &str)-> Result<(), Box<dyn std::error::Error>>{
+pub fn get_cotizaciones(emisora: &str) -> Result<Option<Cotizacion>, Box<dyn std::error::Error>> {
     let url = format!(
-        "https://api.databursatil.com/v2/cotizaciones?token=10f433119085379e0dc544c3cd94e8&emisora_serie={}&concepto=u,p,v,f&bolsa=bmv",
+        "https://api.databursatil.com/v2/cotizaciones?token=10f433119085379e0dc544c3cd94e8&emisora_serie={}&concepto=p,v,u&bolsa=bmv",
         emisora
     );
-
     let client = HttpClient::new();
+
     let response = client
         .get(&url)
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
-    //u = ultimo precio, f = fecha de precios, p = precio promedio porderado, v=volumen ponderado
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("Cotizaciones: {:#?}", map);
-    Ok(())
+
+    let map: HashMap<String, serde_json::Value> = serde_json::from_str(&response)?;
+
+    for (ticker, inner_obj) in map {
+        if let serde_json::Value::Object(bolsas) = inner_obj {
+            for (_bolsa, valores) in bolsas {
+                if let serde_json::Value::Object(inner_jsn) = valores {
+                    let mut ultimo_precio = None;
+                    let mut precio_promedio = None;
+                    let mut volumen = None;
+                    let mut fecha = None;
+
+                    for (simbol, value) in &inner_jsn {
+                        match (simbol.as_str(), value) {
+                            ("u", serde_json::Value::Number(num)) => {
+                                ultimo_precio = num.as_f64();
+                            }
+                            ("p", serde_json::Value::Number(num)) => {
+                                precio_promedio = num.as_f64();
+                            }
+                            ("v", serde_json::Value::Number(num)) => {
+                                volumen = num.as_f64();
+                            }
+                            ("f", serde_json::Value::String(s)) => {
+                                fecha = Some(s.clone());
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    let cotizacion = Cotizacion {
+                        simbolo: ticker.clone(),
+                        ultimo_precio,
+                        precio_promedio,
+                        volumen,
+                        fecha,
+                    };
+                    return Ok(Some(cotizacion));
+                }
+            }
+        }
+    }
+
+    Ok(None)
 }
 
-
-pub fn get_top() -> Result<(), Box<dyn std::error::Error>>{
+pub fn get_top() -> Result<TopResponse, Box<dyn std::error::Error>> {
+    // Obtener fecha de hoy o ayer según la hora
+    let now = Local::now();
+    let mut fecha = now.date_naive();
+    if now.hour() < 7 {
+        fecha = fecha.pred();
+    }
+    let fecha_str = fecha.format("%Y-%m-%d").to_string();
     let url = format!(
-        "https://api.databursatil.com/v2/top?token=10f433119085379e0dc544c3cd94e8&variables=suben,bajan,importe,volumen,operaciones&bolsa=BMV&cantidad=5&mercado=local&inicio=2025-06-17&final=2025-06-17"
+        "https://api.databursatil.com/v2/top?token=10f433119085379e0dc544c3cd94e8&variables=suben,bajan,importe,volumen,operaciones&bolsa=BMV&cantidad=5&mercado=local&inicio={fecha}&final={fecha}",
+        fecha = fecha_str
     );
-    let client = HttpClient::new();
+    let client = reqwest::blocking::Client::new();
     let response = client
         .get(&url)
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
 
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("TOP: {:#?}", map);
+    let map: serde_json::Value = serde_json::from_str(&response)?;
 
-    Ok(())
+    fn safe_vec<T: for<'a> serde::Deserialize<'a>>(v: Option<serde_json::Value>) -> Result<Vec<T>, serde_json::Error> {
+        match v {
+            Some(serde_json::Value::Array(arr)) => serde_json::from_value(serde_json::Value::Array(arr)),
+            _ => Ok(vec![]),
+        }
+    }
+
+    let importe: Vec<TopImporte> = safe_vec(map.get("IMPORTE").cloned())?;
+    let bajan: Vec<TopCambio> = safe_vec(map.get("BAJAN").cloned())?;
+    let operaciones: Vec<TopOperaciones> = safe_vec(map.get("OPERACIONES").cloned())?;
+    let suben: Vec<TopCambio> = safe_vec(map.get("SUBEN").cloned())?;
+    let volumen: Vec<TopVolumen> = safe_vec(map.get("VOLUMEN").cloned())?;
+
+    Ok(TopResponse {
+        importe,
+        bajan,
+        operaciones,
+        suben,
+        volumen,
+    })
+}
+
+#[command]
+pub fn get_top_tauri() -> Result<TopResponse, String> {
+    get_top().map_err(|e| e.to_string())
 }
 
 pub fn get_finantials(emisora: &str)->Result<(), Box<dyn std::error::Error>>{
@@ -280,97 +474,83 @@ pub fn get_finantials(emisora: &str)->Result<(), Box<dyn std::error::Error>>{
     Ok(())
 }
 
-pub fn get_idx()->Result<(), Box<dyn std::error::Error>>{
+pub fn get_indices() -> Result<IndicesResponse, Box<dyn std::error::Error>> {
     let url = format!(
         "https://api.databursatil.com/v2/indices?token=10f433119085379e0dc544c3cd94e8&ticker=IPC,FTSEBIVA,SP500,DJIA"
     );
-    let client = HttpClient::new();
+    let client = reqwest::blocking::Client::new();
     let response = client
         .get(&url)
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("Indices: {:#?}", map);
-    Ok(())
-}   
+    let indices: IndicesResponse = serde_json::from_str(&response)?;
+    Ok(indices)
+}
 
+#[command]
+pub fn get_indices_tauri() -> Result<IndicesResponse, String> {
+    get_indices().map_err(|e| e.to_string())
+}
 
-pub fn get_tasas()->Result<(), Box<dyn std::error::Error>>{
+pub fn get_tasas_struct() -> Result<TasasResponse, Box<dyn std::error::Error>> {
     let url = format!(
         "https://api.databursatil.com/v2/tasas?token=10f433119085379e0dc544c3cd94e8"
     );
-    let client = HttpClient::new();
+    let client = reqwest::blocking::Client::new();
     let response = client
         .get(&url)
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("Tasas: {:#?}", map);
-    Ok(())
+    let tasas: TasasResponse = serde_json::from_str(&response)?;
+    Ok(tasas)
 }
 
 
-pub fn get_forex()->Result<(), Box<dyn std::error::Error>>{
+
+pub fn get_forex() -> Result<ForexResponse, Box<dyn std::error::Error>> {
     let url = format!(
         "https://api.databursatil.com/v2/divisas?token=10f433119085379e0dc544c3cd94e8&ticker=USDMXN,EURMXN"
     );
-    let client = HttpClient::new();
+    let client = reqwest::blocking::Client::new();
     let response = client
         .get(&url)
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("Divisas: {:#?}", map);
-    Ok(())
+    let forex: ForexResponse = serde_json::from_str(&response)?;
+    Ok(forex)
 }
 
-pub fn get_comodities()->Result<(), Box<dyn std::error::Error>>{
-    let url = format!(
-        "https://api.databursatil.com/v2/commodities?token=10f433119085379e0dc544c3cd94e8"
-    );
-    let client = HttpClient::new();
-    let response = client
-        .get(&url)
-        .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
-        .send()?
-        .text()?;
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("Divisas: {:#?}", map);
-    Ok(())
-
+#[command]
+pub fn get_forex_tauri() -> Result<ForexResponse, String> {
+    get_forex().map_err(|e| e.to_string())
 }
 
-
-pub fn get_noticias()->Result<(), Box<dyn std::error::Error>>{
-    let url = format!(
-        "https://api.databursatil.com/v2/noticias?token=10f433119085379e0dc544c3cd94e8&"
-    );
-    let client = HttpClient::new();
-    let response = client
-        .get(&url)
-        .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
-        .send()?
-        .text()?;
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("Noticias: {:#?}", map);
-    Ok(())
-}
-
-
-pub fn get_cables()->Result<(), Box<dyn std::error::Error>>{
-    let url = format!(
-        "https://api.databursatil.com/v2/cables?token=10f433119085379e0dc544c3cd94e8&categorias=valuaciones,top"
-    );
-    let client = HttpClient::new();
-    let response = client
-        .get(&url)
-        .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
-        .send()?
-        .text()?;
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("Noticias: {:#?}", map);
-    Ok(())
+#[command]
+pub fn buscar_emisoras(query: String) -> Result<Vec<EmisoraBusqueda>, String> {
+    use postgres::{Client, NoTls};
+    let mut client = Client::connect(
+        "host=localhost user=garden_admin password=password dbname=dalia_db",
+        NoTls,
+    ).map_err(|e| e.to_string())?;
+    let sql = r#"
+        SELECT razon_social, emisoras, serie
+        FROM emisoras
+        WHERE LOWER(razon_social) LIKE $1 OR LOWER(emisoras) LIKE $1
+        ORDER BY razon_social
+        LIMIT 20
+    "#;
+    let pattern = format!("%{}%", query.to_lowercase());
+    let rows = client.query(sql, &[&pattern]).map_err(|e| e.to_string())?;
+    let results = rows
+        .into_iter()
+        .map(|row| EmisoraBusqueda {
+            razon_social: row.get(0),
+            emisoras: row.get(1),
+            serie: row.get(2),
+        })
+        .collect();
+    Ok(results)
 }
