@@ -13,16 +13,16 @@ pub struct Emisora {
     pub razon_social: String,
     pub isin: String,
     pub bolsa: String,
-    #[serde(rename = "tipo_valor")]
+    #[serde(rename = "tipo_valor_descripcion")]
     pub tipo_valor: Option<String>,
     pub tipo_valor_id: String,
     pub estatus: String,
-    #[serde(rename = "acciones_circulacion")]
+    #[serde(rename = "acciones_en_circulacion")]
     pub acciones_circulacion: Option<i64>,
-    #[serde(rename = "rangos_historicos")]
-    pub rangos_historicos: Option<serde_json::Value>,
-    #[serde(rename = "rangos_financieros")]
-    pub rangos_financieros: Option<serde_json::Value>,
+    #[serde(rename = "rango_historicos")]
+    pub rangos_historicos: Option<String>,
+    #[serde(rename = "rango_financieros")]
+    pub rangos_financieros: Option<String>,
     pub dividendos: Option<serde_json::Value>,
 }
 
@@ -154,6 +154,7 @@ fn parse_json(s: Option<String>) -> Option<serde_json::Value> {
     s.and_then(|json_str| serde_json::from_str(&json_str).ok())
 }
 
+/// Depuración: muestra todo lo que se va a guardar y si hay error en la BD, lo imprime con los datos
 pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
     let url = "https://api.databursatil.com/v2/emisoras?token=10f433119085379e0dc544c3cd94e8";
     let client = HttpClient::new();
@@ -165,35 +166,114 @@ pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Erro
 
     let map: HashMap<String, serde_json::Value> = serde_json::from_str(&response)?;
     println!("Total tickers recibidos: {}", map.len());
-
+    let mut guardados = 0;
+    let mut errores = 0;
     for (ticker, inner_obj) in map {
         println!("Procesando ticker: {}", ticker);
-        if let Some((_, emisora_val)) = inner_obj.as_object().and_then(|o| o.iter().next()) {
-            match serde_json::from_value::<Emisora>(emisora_val.clone()) {
-                Ok(emisora) => {
-                    println!("Emisora deserializada: {:?}", emisora);
-                    let serie = String::new();
-
-                    let rangos_historicos_str = emisora.rangos_historicos
-                        .as_ref()
-                        .map(serde_json::to_string)
-                        .transpose()?;
-                        
-                    let rangos_financieros_str = emisora.rangos_financieros
-                        .as_ref()
-                        .map(serde_json::to_string)
-                        .transpose()?;
-                        
-                    let dividendos_str = emisora.dividendos
-                        .as_ref()
-                        .map(serde_json::to_string)
-                        .transpose()?;
-
+        if let Some(obj) = inner_obj.as_object() {
+            for (serie, emisora_val) in obj {
+                // Si la serie es un array, recorre cada objeto dentro del array
+                if emisora_val.is_array() {
+                    if let Some(arr) = emisora_val.as_array() {
+                        for sub_emisora_val in arr {
+                            if let Some(emisora_obj) = sub_emisora_val.as_object() {
+                                // ...guardar como antes, usando 'serie' y los campos de emisora_obj...
+                                let razon_social = emisora_obj.get("razon_social").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                let isin = emisora_obj.get("isin").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                let bolsa = emisora_obj.get("bolsa").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                let tipo_valor = emisora_obj.get("tipo_valor_descripcion").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                let tipo_valor_id = emisora_obj.get("tipo_valor_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                let estatus = emisora_obj.get("estatus").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                let acciones_circulacion = emisora_obj.get("acciones_en_circulacion").and_then(|v| v.as_i64());
+                                let rangos_historicos = emisora_obj.get("rango_historicos").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                let rangos_financieros = emisora_obj.get("rango_financieros").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                let dividendos = emisora_obj.get("dividendos").cloned();
+                                let rangos_historicos_str = rangos_historicos.clone();
+                                let rangos_financieros_str = rangos_financieros.clone();
+                                let dividendos_str = dividendos.as_ref().map(|v| serde_json::to_string(v).unwrap_or_default());
+                                let rows = pg_client.query(
+                                    "SELECT 1 FROM emisoras WHERE emisoras = $1 AND serie = $2",
+                                    &[&ticker, &serie],
+                                )?;
+                                if rows.is_empty() {
+                                    match pg_client.execute(
+                                        "INSERT INTO emisoras (
+                                            emisoras, serie, razon_social, isin, bolsa, tipo_valor, tipo_valor_id, estatus,
+                                            acciones_circulacion, rangos_historicos, rangos_financieros, dividendos
+                                        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
+                                        &[
+                                            &ticker,
+                                            &serie,
+                                            &razon_social,
+                                            &isin,
+                                            &bolsa,
+                                            &tipo_valor,
+                                            &tipo_valor_id,
+                                            &estatus,
+                                            &acciones_circulacion,
+                                            &rangos_historicos_str,
+                                            &rangos_financieros_str,
+                                            &dividendos_str,
+                                        ],
+                                    ) {
+                                        Ok(_) => { println!("Insertado: {} ({})", ticker, serie); guardados += 1; },
+                                        Err(e) => { println!("Error insertando {} ({}): {}\nDatos: {}", ticker, serie, e, serde_json::to_string(&emisora_obj).unwrap_or_default()); errores += 1; },
+                                    }
+                                } else {
+                                    match pg_client.execute(
+                                        "UPDATE emisoras SET
+                                            razon_social = $3,
+                                            isin = $4,
+                                            bolsa = $5,
+                                            tipo_valor = $6,
+                                            tipo_valor_id = $7,
+                                            estatus = $8,
+                                            acciones_circulacion = $9,
+                                            rangos_historicos = $10,
+                                            rangos_financieros = $11,
+                                            dividendos = $12
+                                         WHERE emisoras = $1 AND serie = $2",
+                                        &[
+                                            &ticker,
+                                            &serie,
+                                            &razon_social,
+                                            &isin,
+                                            &bolsa,
+                                            &tipo_valor,
+                                            &tipo_valor_id,
+                                            &estatus,
+                                            &acciones_circulacion,
+                                            &rangos_historicos_str,
+                                            &rangos_financieros_str,
+                                            &dividendos_str,
+                                        ],
+                                    ) {
+                                        Ok(_) => { println!("Actualizado: {} ({})", ticker, serie); guardados += 1; },
+                                        Err(e) => { println!("Error actualizando {} ({}): {}\nDatos: {}", ticker, serie, e, serde_json::to_string(&emisora_obj).unwrap_or_default()); errores += 1; },
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if let Some(emisora_obj) = emisora_val.as_object() {
+                    // Caso normal: objeto por serie
+                    let razon_social = emisora_obj.get("razon_social").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    let isin = emisora_obj.get("isin").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    let bolsa = emisora_obj.get("bolsa").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    let tipo_valor = emisora_obj.get("tipo_valor_descripcion").and_then(|v| v.as_str()).map(|s| s.to_string());
+                    let tipo_valor_id = emisora_obj.get("tipo_valor_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    let estatus = emisora_obj.get("estatus").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    let acciones_circulacion = emisora_obj.get("acciones_en_circulacion").and_then(|v| v.as_i64());
+                    let rangos_historicos = emisora_obj.get("rango_historicos").and_then(|v| v.as_str()).map(|s| s.to_string());
+                    let rangos_financieros = emisora_obj.get("rango_financieros").and_then(|v| v.as_str()).map(|s| s.to_string());
+                    let dividendos = emisora_obj.get("dividendos").cloned();
+                    let rangos_historicos_str = rangos_historicos.clone();
+                    let rangos_financieros_str = rangos_financieros.clone();
+                    let dividendos_str = dividendos.as_ref().map(|v| serde_json::to_string(v).unwrap_or_default());
                     let rows = pg_client.query(
                         "SELECT 1 FROM emisoras WHERE emisoras = $1 AND serie = $2",
                         &[&ticker, &serie],
                     )?;
-                    
                     if rows.is_empty() {
                         match pg_client.execute(
                             "INSERT INTO emisoras (
@@ -203,20 +283,20 @@ pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Erro
                             &[
                                 &ticker,
                                 &serie,
-                                &emisora.razon_social,
-                                &emisora.isin,
-                                &emisora.bolsa,
-                                &emisora.tipo_valor,
-                                &emisora.tipo_valor_id,
-                                &emisora.estatus,
-                                &emisora.acciones_circulacion,
+                                &razon_social,
+                                &isin,
+                                &bolsa,
+                                &tipo_valor,
+                                &tipo_valor_id,
+                                &estatus,
+                                &acciones_circulacion,
                                 &rangos_historicos_str,
                                 &rangos_financieros_str,
                                 &dividendos_str,
                             ],
                         ) {
-                            Ok(_) => println!("Insertado: {}", ticker),
-                            Err(e) => println!("Error insertando {}: {}", ticker, e),
+                            Ok(_) => { println!("Insertado: {} ({})", ticker, serie); guardados += 1; },
+                            Err(e) => { println!("Error insertando {} ({}): {}\nDatos: {}", ticker, serie, e, serde_json::to_string(&emisora_obj).unwrap_or_default()); errores += 1; },
                         }
                     } else {
                         match pg_client.execute(
@@ -235,50 +315,48 @@ pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Erro
                             &[
                                 &ticker,
                                 &serie,
-                                &emisora.razon_social,
-                                &emisora.isin,
-                                &emisora.bolsa,
-                                &emisora.tipo_valor,
-                                &emisora.tipo_valor_id,
-                                &emisora.estatus,
-                                &emisora.acciones_circulacion,
+                                &razon_social,
+                                &isin,
+                                &bolsa,
+                                &tipo_valor,
+                                &tipo_valor_id,
+                                &estatus,
+                                &acciones_circulacion,
                                 &rangos_historicos_str,
                                 &rangos_financieros_str,
                                 &dividendos_str,
                             ],
                         ) {
-                            Ok(_) => println!("Actualizado: {}", ticker),
-                            Err(e) => println!("Error actualizando {}: {}", ticker, e),
+                            Ok(_) => { println!("Actualizado: {} ({})", ticker, serie); guardados += 1; },
+                            Err(e) => { println!("Error actualizando {} ({}): {}\nDatos: {}", ticker, serie, e, serde_json::to_string(&emisora_obj).unwrap_or_default()); errores += 1; },
                         }
                     }
-                }
-                Err(e) => {
-                    println!("Error deserializando emisora para {}: {}", ticker, e);
                 }
             }
         } else {
             println!("No se encontró objeto interno para ticker: {}", ticker);
+            errores += 1;
         }
     }
-
+    println!("Guardados correctamente: {} | Errores: {}", guardados, errores);
     Ok(())
 }
 
 pub fn show_data(pg_client: &mut Client)-> Result<(), Box<dyn std::error::Error>> {
     for row in pg_client.query(
-        "SELECT 
-            emisoras, 
-            serie, 
-            razon_social, 
-            isin, 
-            bolsa, 
-            tipo_valor, 
-            tipo_valor_id, 
-            estatus, 
-            acciones_circulacion, 
-            rangos_historicos, 
-            rangos_financieros, 
-            dividendos 
+        "SELECT \
+            emisoras, \
+            serie, \
+            razon_social, \
+            isin, \
+            bolsa, \
+            tipo_valor, \
+            tipo_valor_id, \
+            estatus, \
+            acciones_circulacion, \
+            rangos_historicos, \
+            rangos_financieros, \
+            dividendos \
         FROM emisoras",
         &[]
     )? {
@@ -290,8 +368,8 @@ pub fn show_data(pg_client: &mut Client)-> Result<(), Box<dyn std::error::Error>
             tipo_valor_id: row.get(6),
             estatus: row.get(7),
             acciones_circulacion: row.get(8),
-            rangos_historicos: parse_json(row.get(9)),
-            rangos_financieros: parse_json(row.get(10)),
+            rangos_historicos: row.get(9),
+            rangos_financieros: row.get(10),
             dividendos: parse_json(row.get(11)),
         };
         println!("{:#?}", emisora);
@@ -458,10 +536,12 @@ pub fn get_top_tauri() -> Result<TopResponse, String> {
     get_top().map_err(|e| e.to_string())
 }
 
-pub fn get_finantials(emisora: &str)->Result<(), Box<dyn std::error::Error>>{
-    let url= format!(
-        "https://api.databursatil.com/v2/financieros?token=10f433119085379e0dc544c3cd94e8&emisora={}&periodo=1T_2025&financieros=flujos",
-        emisora
+
+
+pub fn get_flujos_financieros(pg_client: &mut Client, emisora: &str, trimestre: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let url = format!(
+        "https://api.databursatil.com/v2/financieros?token=10f433119085379e0dc544c3cd94e8&emisora={}&periodo={}&financieros=flujos",
+        emisora, trimestre
     );
     let client = HttpClient::new();
     let response = client
@@ -469,10 +549,155 @@ pub fn get_finantials(emisora: &str)->Result<(), Box<dyn std::error::Error>>{
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
-    let map: HashMap <String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("FINANCIEROS: {:#?}", map);
+    let map: HashMap<String, serde_json::Value> = serde_json::from_str(&response)?;
+    println!("{:#?}", map);
+    if let Some(serde_json::Value::Object(valores)) = map.get("flujos") {
+        if let Some((periodo, datos)) = valores.iter().max_by_key(|(k, _)| *k) {
+            let get_num = |key: &str| datos.get(key).and_then(|v| v.get(1)).and_then(|v| v.as_f64());
+            let fecha_sql = Some(trimestre.to_string());
+            let trimestre_sql = trimestre;
+            let flujo_operacion = get_num("cashflowsfromusedinoperatingactivities");
+            let utilidad_neta = get_num("profitloss");
+            let depreciacion = get_num("adjustmentsfordepreciationandamortisationexpense");
+            let cambio_inventarios = get_num("adjustmentsfordecreaseincreaseininventories");
+            let cambio_cxc = get_num("adjustmentsfordecreaseincreaseintradeaccountreceivable");
+            let cambio_cxp = get_num("adjustmentsforincreasedecreaseintradeaccountpayable");
+            let impuestos_pagados = get_num("incometaxespaidrefundclassifiedasoperatingactivities");
+            let intereses_pagados = get_num("interestpaidclassifiedasoperatingactivities");
+            let flujo_inversion = get_num("cashflowsfromusedininvestingactivities");
+            let capex = get_num("purchaseofpropertyplantandequipmentclassifiedasinvestingactivities");
+            let venta_activos = get_num("proceedsfromsalesofpropertyplantandequipmentclassifiedasinvestingactivities");
+            let compra_intangibles = get_num("purchaseofintangibleassetsclassifiedasinvestingactivities");
+            let flujo_financiamiento = get_num("cashflowsfromusedinfinancingactivities");
+            let prestamos_obtenidos = get_num("proceedsfromborrowingsclassifiedasfinancingactivities");
+            let pago_deuda = get_num("repaymentsofborrowingsclassifiedasfinancingactivities");
+            let dividendos_pagados = get_num("dividendspaidclassifiedasfinancingactivities");
+            let recompras = get_num("paymentstoacquireorredeementitysshares");
+            let cambio_efectivo = get_num("increasedecreaseincashandcashequivalents");
+            let efectivo_final = get_num("cashandcashequivalents_ending");
+            let efecto_tc = get_num("effectofexchangeratechangesoncashandcashequivalents");
+            let deterioros = get_num("adjustmentsforimpairmentlossreversalofimpairmentlossrecognisedinprofitorloss");
+            let partidas_no_monetarias = get_num("otheradjustmentsfornoncashitems");
+            let costos_financieros = get_num("adjustmentsforfinancecosts");
+            let fecha = periodo.split('_').last().unwrap_or("");
+            let fecha_sql = match chrono::NaiveDate::parse_from_str(fecha, "%Y-%m-%d") {
+                Ok(date) => Some(date),
+                Err(_) => { return Ok(()); }
+            };
+            let query = "INSERT INTO estado_flujos (
+                emisora, trimestre, fecha, flujo_operacion, utilidad_neta, depreciacion, cambio_inventarios, cambio_cxc, cambio_cxp, impuestos_pagados, intereses_pagados,
+                flujo_inversion, capex, venta_activos, compra_intangibles,
+                flujo_financiamiento, prestamos_obtenidos, pago_deuda, dividendos_pagados, recompras,
+                cambio_efectivo, efectivo_final, efecto_tc,
+                deterioros, partidas_no_monetarias, costos_financieros
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+                $12, $13, $14, $15,
+                $16, $17, $18, $19, $20,
+                $21, $22, $23,
+                $24, $25, $26
+            ) ON CONFLICT (emisora, trimestre) DO UPDATE SET
+                fecha=EXCLUDED.fecha, flujo_operacion=EXCLUDED.flujo_operacion, utilidad_neta=EXCLUDED.utilidad_neta, depreciacion=EXCLUDED.depreciacion, cambio_inventarios=EXCLUDED.cambio_inventarios, cambio_cxc=EXCLUDED.cambio_cxc, cambio_cxp=EXCLUDED.cambio_cxp, impuestos_pagados=EXCLUDED.impuestos_pagados, intereses_pagados=EXCLUDED.intereses_pagados,
+                flujo_inversion=EXCLUDED.flujo_inversion, capex=EXCLUDED.capex, venta_activos=EXCLUDED.venta_activos, compra_intangibles=EXCLUDED.compra_intangibles,
+                flujo_financiamiento=EXCLUDED.flujo_financiamiento, prestamos_obtenidos=EXCLUDED.prestamos_obtenidos, pago_deuda=EXCLUDED.pago_deuda, dividendos_pagados=EXCLUDED.dividendos_pagados, recompras=EXCLUDED.recompras,
+                cambio_efectivo=EXCLUDED.cambio_efectivo, efectivo_final=EXCLUDED.efectivo_final, efecto_tc=EXCLUDED.efecto_tc,
+                deterioros=EXCLUDED.deterioros, partidas_no_monetarias=EXCLUDED.partidas_no_monetarias, costos_financieros=EXCLUDED.costos_financieros";
+            let params: [&(dyn postgres::types::ToSql + Sync); 26] = [
+                &emisora,
+                &trimestre_sql,
+                &fecha_sql,
+                &flujo_operacion,
+                &utilidad_neta,
+                &depreciacion,
+                &cambio_inventarios,
+                &cambio_cxc,
+                &cambio_cxp,
+                &impuestos_pagados,
+                &intereses_pagados,
+                &flujo_inversion,
+                &capex,
+                &venta_activos,
+                &compra_intangibles,
+                &flujo_financiamiento,
+                &prestamos_obtenidos,
+                &pago_deuda,
+                &dividendos_pagados,
+                &recompras,
+                &cambio_efectivo,
+                &efectivo_final,
+                &efecto_tc,
+                &deterioros,
+                &partidas_no_monetarias,
+                &costos_financieros
+            ];
+            let _ = pg_client.execute(query, &params);
+        }
+    }
     Ok(())
 }
+
+pub fn get_posicion_financiera(pg_client: &mut Client, emisora: &str, trimestre: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let url = format!(
+        "https://api.databursatil.com/v2/financieros?token=10f433119085379e0dc544c3cd94e8&emisora={}&periodo={}&financieros=posicion",
+        emisora, trimestre
+    );
+    let client = HttpClient::new();
+    let response = client
+        .get(&url)
+        .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
+        .send()?
+        .text()?;
+    let map: HashMap<String, serde_json::Value> = serde_json::from_str(&response)?;
+    println!("{:#?}", map);
+    if let Some(serde_json::Value::Object(valores)) = map.get("posicion") {
+        if let Some((pedriodo, datos)) = valores.iter().max_by_key(|(k, _)| *k){
+        let get_num = |key: &str| datos.get(key).and_then(|v| v.get(1)).and_then(|v| v.as_f64());
+        
+        }
+    }
+}
+
+pub fn get_resultado_trimestre(pg_client: &mut Client, emisora: &str, trimestre: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let url = format!(
+        "https://api.databursatil.com/v2/financieros?token=10f433119085379e0dc544c3cd94e8&emisora={}&periodo={}&financieros=resultado_trimestre",
+        emisora, trimestre
+    );
+    let client = HttpClient::new();
+    let response = client
+        .get(&url)
+        .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
+        .send()?
+        .text()?;
+    let map: HashMap<String, serde_json::Value> = serde_json::from_str(&response)?;
+    println!("RESULTADO TRIMESTRAL: {:#?}", map);
+    if let Some(serde_json::Value::Object(valores)) = map.get("resultado_trimestre") {
+        for (periodo, datos) in valores {
+            let jsonb_str = serde_json::to_string(&datos)?;
+            let ingresos = datos.get("revenue").and_then(|v| v.get(1)).and_then(|v| v.as_f64());
+            let utilidad_bruta = datos.get("grossprofit").and_then(|v| v.get(1)).and_then(|v| v.as_f64());
+            let utilidad_operacion = datos.get("profitlossfromoperatingactivities").and_then(|v| v.get(1)).and_then(|v| v.as_f64());
+            let utilidad_neta = datos.get("profitloss").and_then(|v| v.get(1)).and_then(|v| v.as_f64());
+            let fecha = periodo.split('_').last().unwrap_or("");
+            let fecha_sql = match chrono::NaiveDate::parse_from_str(fecha, "%Y-%m-%d") {
+                Ok(date) => Some(date),
+                Err(e) => {
+                    println!("[WARN] Fecha inválida '{}' para {}-{}: {}. Registro omitido.", fecha, emisora, periodo, e);
+                    continue;
+                }
+            };
+            let query = "INSERT INTO estado_resultado_trimestre (emisora, trimestre, fecha, ingresos, utilidad_bruta, utilidad_operacion, utilidad_neta, datos) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
+                ON CONFLICT (emisora, trimestre) DO UPDATE SET fecha=EXCLUDED.fecha, ingresos=EXCLUDED.ingresos, utilidad_bruta=EXCLUDED.utilidad_bruta, utilidad_operacion=EXCLUDED.utilidad_operacion, utilidad_neta=EXCLUDED.utilidad_neta, datos=EXCLUDED.datos";
+            match pg_client.execute(query, &[&emisora, &periodo, &fecha_sql, &ingresos, &utilidad_bruta, &utilidad_operacion, &utilidad_neta, &jsonb_str]) {
+                Ok(_) => println!("Guardado en estado_resultado_trimestre: {} - {}", emisora, periodo),
+                Err(e) => println!("Error guardando en estado_resultado_trimestre: {} - {}: {}", emisora, periodo, e),
+            }
+        }
+    } else {
+        println!("No se encontró objeto 'resultado_trimestre' en la respuesta de la API");
+    }
+    Ok(())
+}
+
 
 pub fn get_indices() -> Result<IndicesResponse, Box<dyn std::error::Error>> {
     let url = format!(

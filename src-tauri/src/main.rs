@@ -6,16 +6,21 @@ use get_data::{get_intradia, get_tasas_struct, get_forex, get_indices, get_top_t
 use tauri::Builder;
 
 fn main() {
-    Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            get_top_tauri,
-            buscar_emisoras,
-            get_data::get_indices_tauri,
-            get_data::get_forex_tauri
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    let mut client = Client::connect(
+        "host=localhost user=garden_admin password=password dbname=dalia_db",
+        NoTls,
+    ).expect("No se pudo conectar a la base de datos");
+    let trimestre = "1T_2025";
+    // Llama solo a la función de flujos para depuración
+    get_data::get_flujos_financieros(&mut client, "LIVEPOL", trimestre).unwrap();
+    // Puedes cambiar "KOF" y el trimestre para probar otros casos
 }
+
+
+
+
+
+
 
 fn main_test() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = Client::connect(

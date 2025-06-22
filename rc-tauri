@@ -1,0 +1,36 @@
+                                              Table "public.estado_flujos"
+         Column         |  Type   | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+------------------------+---------+-----------+----------+---------+----------+-------------+--------------+-------------
+ emisora                | text    |           | not null |         | extended |             |              | 
+ trimestre              | text    |           | not null |         | extended |             |              | 
+ fecha                  | date    |           |          |         | plain    |             |              | 
+ flujo_operacion        | numeric |           |          |         | main     |             |              | 
+ utilidad_neta          | numeric |           |          |         | main     |             |              | 
+ depreciacion           | numeric |           |          |         | main     |             |              | 
+ cambio_inventarios     | numeric |           |          |         | main     |             |              | 
+ cambio_cxc             | numeric |           |          |         | main     |             |              | 
+ cambio_cxp             | numeric |           |          |         | main     |             |              | 
+ impuestos_pagados      | numeric |           |          |         | main     |             |              | 
+ intereses_pagados      | numeric |           |          |         | main     |             |              | 
+ flujo_inversion        | numeric |           |          |         | main     |             |              | 
+ capex                  | numeric |           |          |         | main     |             |              | 
+ venta_activos          | numeric |           |          |         | main     |             |              | 
+ compra_intangibles     | numeric |           |          |         | main     |             |              | 
+ flujo_financiamiento   | numeric |           |          |         | main     |             |              | 
+ prestamos_obtenidos    | numeric |           |          |         | main     |             |              | 
+ pago_deuda             | numeric |           |          |         | main     |             |              | 
+ dividendos_pagados     | numeric |           |          |         | main     |             |              | 
+ recompras              | numeric |           |          |         | main     |             |              | 
+ cambio_efectivo        | numeric |           |          |         | main     |             |              | 
+ efectivo_final         | numeric |           |          |         | main     |             |              | 
+ efecto_tc              | numeric |           |          |         | main     |             |              | 
+ deterioros             | numeric |           |          |         | main     |             |              | 
+ partidas_no_monetarias | numeric |           |          |         | main     |             |              | 
+ costos_financieros     | numeric |           |          |         | main     |             |              | 
+ datos                  | jsonb   |           |          |         | extended |             |              | 
+Indexes:
+    "estado_flujos_pkey" PRIMARY KEY, btree (emisora, trimestre)
+Foreign-key constraints:
+    "estado_flujos_emisora_fkey" FOREIGN KEY (emisora) REFERENCES emisoras(emisoras)
+Access method: heap
+

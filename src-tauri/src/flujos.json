@@ -1,0 +1,660 @@
+"FLUJOS": {
+    "flujos": Object {
+        "2024-01-01_2024-03-31": Object {
+            "adjustmentsfordecreaseincreaseininventories": Array [
+                String("disminuciones (incrementos) en los inventarios"),
+                Number(-546872000),
+            ],
+            "adjustmentsfordecreaseincreaseinotheroperatingreceivables": Array [
+                String("disminuciones (incrementos) en otras cuentas por cobrar derivadas de las actividades de operación"),
+                Number(-1233613000),
+            ],
+            "adjustmentsfordecreaseincreaseintradeaccountreceivable": Array [
+                String("disminución (incremento) de clientes"),
+                Number(1247839000),
+            ],
+            "adjustmentsfordepreciationandamortisationexpense": Array [
+                String("gastos de depreciación y amortización"),
+                Number(2764030000),
+            ],
+            "adjustmentsforfairvaluegainslosses": Array [
+                String("pérdida (utilidad) del valor razonable"),
+                Number(0),
+            ],
+            "adjustmentsforfinancecosts": Array [
+                String("ingresos y gastos financieros, neto"),
+                Number(14186000),
+            ],
+            "adjustmentsforimpairmentlossreversalofimpairmentlossrecognisedinprofitorloss": Array [
+                String("deterioro de valor (reversiones de pérdidas por deterioro de valor) reconocidas en el resultado del periodo"),
+                Number(31693000),
+            ],
+            "adjustmentsforincometaxexpense": Array [
+                String("impuestos a la utilidad"),
+                Number(2258209000),
+            ],
+            "adjustmentsforincreasedecreaseinotheroperatingpayables": Array [
+                String("incrementos (disminuciones) en otras cuentas por pagar derivadas de las actividades de operación"),
+                Number(-686209000),
+            ],
+            "adjustmentsforincreasedecreaseintradeaccountpayable": Array [
+                String("incremento (disminución) de proveedores"),
+                Number(604657000),
+            ],
+            "adjustmentsforlossesgainsondisposalofnoncurrentassets": Array [
+                String("pérdida (utilidad) por la disposición de activos no circulantes"),
+                Number(-15323000),
+            ],
+            "adjustmentsforprovisions": Array [
+                String("provisiones"),
+                Number(0),
+            ],
+            "adjustmentsforreconcileprofitloss": Array [
+                String("ajustes para conciliar la utilidad (pérdida)"),
+                Number(4979795000),
+            ],
+            "adjustmentsforreconcileprofitlossabstract": Array [
+                String("ajustes para conciliar la utilidad (pérdida)"),
+            ],
+            "adjustmentsforsharebasedpayments": Array [
+                String("pagos basados en acciones"),
+                Number(0),
+            ],
+            "adjustmentsforundistributedprofitsofassociates": Array [
+                String("utilidades no distribuidas de asociadas"),
+                Number(0),
+            ],
+            "adjustmentsforunrealisedforeignexchangelossesgains": Array [
+                String("pérdida (utilidad) de moneda extranjera no realizadas"),
+                Number(0),
+            ],
+            "ajustelinealdeingresosporarrendamientos": Array [
+                String("ajuste lineal de ingresos por arrendamientos"),
+                Number(0),
+            ],
+            "ajusteporvalordelaspropiedades": Array [
+                String("ajuste por valor de las propiedades"),
+                Number(0),
+            ],
+            "amortizaciondecomisionesporarrendamiento": Array [
+                String("amortización de comisiones por arrendamiento"),
+                Number(0),
+            ],
+            "cashadvancesandloansmadetootherpartiesclassifiedasinvestingactivities": Array [
+                String("anticipos de efectivo y préstamos concedidos a terceros"),
+                Number(0),
+            ],
+            "cashandcashequivalents": Array [
+                String("efectivo y equivalentes de efectivo al principio del periodo"),
+                Number(31059918000),
+            ],
+            "cashandcashequivalents_ending": Array [
+                String("efectivo y equivalentes de efectivo al final del periodo"),
+                Number(35045849000),
+            ],
+            "cashflowsfromlosingcontrolofsubsidiariesorotherbusinessesclassifiedasinvestingactivities": Array [
+                String("flujos de efectivo procedentes de la pérdida de control de subsidiarias u otros negocios"),
+                Number(0),
+            ],
+            "cashflowsfromusedinfinancingactivities": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de financiamiento"),
+                Number(-2206889000),
+            ],
+            "cashflowsfromusedinfinancingactivitiesabstract": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de financiamiento"),
+            ],
+            "cashflowsfromusedininvestingactivities": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de inversión"),
+                Number(-3037186000),
+            ],
+            "cashflowsfromusedininvestingactivitiesabstract": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de inversión"),
+            ],
+            "cashflowsfromusedinoperatingactivities": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de operación"),
+                Number(9690134000),
+            ],
+            "cashflowsfromusedinoperatingactivitiesabstract": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de operación"),
+            ],
+            "cashflowsfromusedinoperations": Array [
+                String("flujos de efectivo procedentes (utilizados en) operaciones"),
+                Number(10227258000),
+            ],
+            "cashflowsusedinobtainingcontrolofsubsidiariesorotherbusinessesclassifiedasinvestingactivities": Array [
+                String("flujos de efectivo utilizados para obtener el control de subsidiarias u otros negocios"),
+                Number(0),
+            ],
+            "cashpaymentsforfuturecontractsforwardcontractsoptioncontractsandswapcontractsclassifiedasinvestingactivities": Array [
+                String("pagos derivados de contratos de futuro, a término, de opciones y de permuta financiera"),
+                Number(0),
+            ],
+            "cashreceiptsfromfuturecontractsforwardcontractsoptioncontractsandswapcontractsclassifiedasinvestingactivities": Array [
+                String("cobros procedentes de contratos de futuro, a término, de opciones y de permuta financiera"),
+                Number(0),
+            ],
+            "cashreceiptsfromrepaymentofadvancesandloansmadetootherpartiesclassifiedasinvestingactivities": Array [
+                String("cobros procedentes del reembolso de anticipos y préstamos concedidos a terceros"),
+                Number(0),
+            ],
+            "dividendspaidclassifiedasfinancingactivities": Array [
+                String("dividendos pagados"),
+                Number(0),
+            ],
+            "dividendspaidclassifiedasoperatingactivities": Array [
+                String("dividendos pagados"),
+                Number(0),
+            ],
+            "dividendsreceivedclassifiedasinvestingactivities": Array [
+                String("dividendos recibidos"),
+                Number(0),
+            ],
+            "dividendsreceivedclassifiedasoperatingactivities": Array [
+                String("dividendos recibidos"),
+                Number(0),
+            ],
+            "effectofexchangeratechangesoncashandcashequivalents": Array [
+                String("efectos de la variación en la tasa de cambio sobre el efectivo y equivalentes al efectivo"),
+                Number(-460128000),
+            ],
+            "effectofexchangeratechangesoncashandcashequivalentsabstract": Array [
+                String("efectos de la variación en la tasa de cambio sobre el efectivo y equivalentes al efectivo"),
+            ],
+            "incometaxespaidrefundclassifiedasfinancingactivities": Array [
+                String("impuestos a las ganancias reembolsados (pagados)"),
+                Number(0),
+            ],
+            "incometaxespaidrefundclassifiedasinvestingactivities": Array [
+                String("impuestos a la utilidad reembolsados (pagados)"),
+                Number(0),
+            ],
+            "incometaxespaidrefundclassifiedasoperatingactivities": Array [
+                String("impuestos a las utilidades reembolsados (pagados)"),
+                Number(1711307000),
+            ],
+            "increasedecreaseincashandcashequivalents": Array [
+                String("incremento (disminución) de efectivo y equivalentes de efectivo"),
+                Number(3985931000),
+            ],
+            "increasedecreaseincashandcashequivalentsbeforeeffectofexchangeratechanges": Array [
+                String("incremento (disminución) de efectivo y equivalentes al efectivo, antes del efecto de los cambios en la tasa de cambio"),
+                Number(4446059000),
+            ],
+            "interestpaidclassifiedasfinancingactivities": Array [
+                String("intereses pagados"),
+                Number(1155410000),
+            ],
+            "interestpaidclassifiedasinvestingactivities": Array [
+                String("intereses pagados"),
+                Number(0),
+            ],
+            "interestpaidclassifiedasoperatingactivities": Array [
+                String("intereses pagados"),
+                Number(-1796824000),
+            ],
+            "interestreceivedclassifiedasinvestingactivities": Array [
+                String("intereses cobrados"),
+                Number(622641000),
+            ],
+            "interestreceivedclassifiedasoperatingactivities": Array [
+                String("intereses recibidos"),
+                Number(-622641000),
+            ],
+            "operacionesdiscontinuas": Array [
+                String("operaciones discontinuas"),
+                Number(0),
+            ],
+            "otheradjustmentsfornoncashitems": Array [
+                String("otras partidas distintas al efectivo"),
+                Number(280478000),
+            ],
+            "otheradjustmentsforwhichcasheffectsareinvestingorfinancingcashflow": Array [
+                String("otros ajustes para los que los efectos sobre el efectivo son flujos de efectivo de inversión o financiamiento"),
+                Number(291288000),
+            ],
+            "otheradjustmentstoreconcileprofitloss": Array [
+                String("otros ajustes para conciliar la utilidad (pérdida)"),
+                Number(0),
+            ],
+            "othercashpaymentstoacquireequityordebtinstrumentsofotherentitiesclassifiedasinvestingactivities": Array [
+                String("otros pagos para adquirir capital o instrumentos de deuda de otras entidades"),
+                Number(0),
+            ],
+            "othercashpaymentstoacquireinterestsinjointventuresclassifiedasinvestingactivities": Array [
+                String("otros pagos para adquirir participaciones en negocios conjuntos"),
+                Number(113168000),
+            ],
+            "othercashreceiptsfromsalesofequityordebtinstrumentsofotherentitiesclassifiedasinvestingactivities": Array [
+                String("otros cobros por la venta de capital o instrumentos de deuda de otras entidades"),
+                Number(0),
+            ],
+            "othercashreceiptsfromsalesofinterestsinjointventuresclassifiedasinvestingactivities": Array [
+                String("otros cobros por la venta de participaciones en negocios conjuntos"),
+                Number(0),
+            ],
+            "otherinflowsoutflowsofcashclassifiedasfinancingactivities": Array [
+                String("otras entradas (salidas) de efectivo"),
+                Number(-643620000),
+            ],
+            "otherinflowsoutflowsofcashclassifiedasinvestingactivities": Array [
+                String("otras entradas (salidas) de efectivo"),
+                Number(228366000),
+            ],
+            "otherinflowsoutflowsofcashclassifiedasoperatingactivities": Array [
+                String("otras entradas (salidas) de efectivo"),
+                Number(0),
+            ],
+            "participacionenasociadasynegociosconjuntos": Array [
+                String("participación en asociadas y negocios conjuntos"),
+                Number(-30568000),
+            ],
+            "paymentsfromchangesinownershipinterestsinsubsidiaries": Array [
+                String("pagos por cambios en las participaciones en la propiedad en subsidiarias que no dan lugar a la pérdida de control"),
+                Number(0),
+            ],
+            "paymentsoffinanceleaseliabilitiesclassifiedasfinancingactivities": Array [
+                String("pagos de pasivos por arrendamientos financieros"),
+                Number(0),
+            ],
+            "paymentsofleaseliabilitiesclassifiedasfinancingactivities": Array [
+                String("pagos de pasivos por arrendamientos"),
+                Number(186593000),
+            ],
+            "paymentsofotherequityinstruments": Array [
+                String("pagos por otras aportaciones en el capital"),
+                Number(0),
+            ],
+            "paymentstoacquireorredeementitysshares": Array [
+                String("pagos por adquirir o rescatar las acciones de la entidad"),
+                Number(0),
+            ],
+            "proceedsfromborrowingsclassifiedasfinancingactivities": Array [
+                String("importes procedentes de préstamos"),
+                Number(-221266000),
+            ],
+            "proceedsfromchangesinownershipinterestsinsubsidiaries": Array [
+                String("importes procedentes por cambios en las participaciones en la propiedad en subsidiarias que no dan lugar a la pérdida de control"),
+                Number(0),
+            ],
+            "proceedsfromgovernmentgrantsclassifiedasfinancingactivities": Array [
+                String("importes procedentes de subvenciones del gobierno"),
+                Number(0),
+            ],
+            "proceedsfromgovernmentgrantsclassifiedasinvestingactivities": Array [
+                String("importes procedentes de subvenciones del gobierno"),
+                Number(0),
+            ],
+            "proceedsfromissuingotherequityinstruments": Array [
+                String("importes procedentes de la emisión de otros instrumentos de capital"),
+                Number(0),
+            ],
+            "proceedsfromissuingshares": Array [
+                String("importes procedentes de la emisión de acciones"),
+                Number(0),
+            ],
+            "proceedsfromotherlongtermassetsclassifiedasinvestingactivities": Array [
+                String("recursos por ventas de otros activos a largo plazo"),
+                Number(0),
+            ],
+            "proceedsfromsalesofintangibleassetsclassifiedasinvestingactivities": Array [
+                String("importes procedentes de ventas de activos intangibles"),
+                Number(0),
+            ],
+            "proceedsfromsalesofpropertyplantandequipmentclassifiedasinvestingactivities": Array [
+                String("importes procedentes de la venta de propiedades, planta y equipo"),
+                Number(30120000),
+            ],
+            "profitloss": Array [
+                String("utilidad (pérdida) neta"),
+                Number(5247463000),
+            ],
+            "purchaseofintangibleassetsclassifiedasinvestingactivities": Array [
+                String("compras de activos intangibles"),
+                Number(247285000),
+            ],
+            "purchaseofotherlongtermassetsclassifiedasinvestingactivities": Array [
+                String("compras de otros activos a largo plazo"),
+                Number(0),
+            ],
+            "purchaseofpropertyplantandequipmentclassifiedasinvestingactivities": Array [
+                String("compras de propiedades, planta y equipo"),
+                Number(3557860000),
+            ],
+            "repaymentsofborrowingsclassifiedasfinancingactivities": Array [
+                String("reembolsos de préstamos"),
+                Number(0),
+            ],
+            "statementofcashflowsabstract": Array [
+                String("estado de flujos de efectivo"),
+            ],
+        },
+        "2025-01-01_2025-03-31": Object {
+            "adjustmentsfordecreaseincreaseininventories": Array [
+                String("disminuciones (incrementos) en los inventarios"),
+                Number(-610368000),
+            ],
+            "adjustmentsfordecreaseincreaseinotheroperatingreceivables": Array [
+                String("disminuciones (incrementos) en otras cuentas por cobrar derivadas de las actividades de operación"),
+                Number(-1003961000),
+            ],
+            "adjustmentsfordecreaseincreaseintradeaccountreceivable": Array [
+                String("disminución (incremento) de clientes"),
+                Number(2360416000),
+            ],
+            "adjustmentsfordepreciationandamortisationexpense": Array [
+                String("gastos de depreciación y amortización"),
+                Number(3384836000),
+            ],
+            "adjustmentsforfairvaluegainslosses": Array [
+                String("pérdida (utilidad) del valor razonable"),
+                Number(0),
+            ],
+            "adjustmentsforfinancecosts": Array [
+                String("ingresos y gastos financieros, neto"),
+                Number(-162480000),
+            ],
+            "adjustmentsforimpairmentlossreversalofimpairmentlossrecognisedinprofitorloss": Array [
+                String("deterioro de valor (reversiones de pérdidas por deterioro de valor) reconocidas en el resultado del periodo"),
+                Number(129690000),
+            ],
+            "adjustmentsforincometaxexpense": Array [
+                String("impuestos a la utilidad"),
+                Number(2680761000),
+            ],
+            "adjustmentsforincreasedecreaseinotheroperatingpayables": Array [
+                String("incrementos (disminuciones) en otras cuentas por pagar derivadas de las actividades de operación"),
+                Number(-1554441000),
+            ],
+            "adjustmentsforincreasedecreaseintradeaccountpayable": Array [
+                String("incremento (disminución) de proveedores"),
+                Number(-4060529000),
+            ],
+            "adjustmentsforlossesgainsondisposalofnoncurrentassets": Array [
+                String("pérdida (utilidad) por la disposición de activos no circulantes"),
+                Number(-56812000),
+            ],
+            "adjustmentsforprovisions": Array [
+                String("provisiones"),
+                Number(0),
+            ],
+            "adjustmentsforreconcileprofitloss": Array [
+                String("ajustes para conciliar la utilidad (pérdida)"),
+                Number(1480367000),
+            ],
+            "adjustmentsforreconcileprofitlossabstract": Array [
+                String("ajustes para conciliar la utilidad (pérdida)"),
+            ],
+            "adjustmentsforsharebasedpayments": Array [
+                String("pagos basados en acciones"),
+                Number(0),
+            ],
+            "adjustmentsforundistributedprofitsofassociates": Array [
+                String("utilidades no distribuidas de asociadas"),
+                Number(0),
+            ],
+            "adjustmentsforunrealisedforeignexchangelossesgains": Array [
+                String("pérdida (utilidad) de moneda extranjera no realizadas"),
+                Number(0),
+            ],
+            "ajustelinealdeingresosporarrendamientos": Array [
+                String("ajuste lineal de ingresos por arrendamientos"),
+                Number(0),
+            ],
+            "ajusteporvalordelaspropiedades": Array [
+                String("ajuste por valor de las propiedades"),
+                Number(0),
+            ],
+            "amortizaciondecomisionesporarrendamiento": Array [
+                String("amortización de comisiones por arrendamiento"),
+                Number(0),
+            ],
+            "cashadvancesandloansmadetootherpartiesclassifiedasinvestingactivities": Array [
+                String("anticipos de efectivo y préstamos concedidos a terceros"),
+                Number(0),
+            ],
+            "cashandcashequivalents": Array [
+                String("efectivo y equivalentes de efectivo al principio del periodo"),
+                Number(32778968000),
+            ],
+            "cashandcashequivalents_ending": Array [
+                String("efectivo y equivalentes de efectivo al final del periodo"),
+                Number(30508714000),
+            ],
+            "cashflowsfromlosingcontrolofsubsidiariesorotherbusinessesclassifiedasinvestingactivities": Array [
+                String("flujos de efectivo procedentes de la pérdida de control de subsidiarias u otros negocios"),
+                Number(0),
+            ],
+            "cashflowsfromusedinfinancingactivities": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de financiamiento"),
+                Number(-1911835000),
+            ],
+            "cashflowsfromusedinfinancingactivitiesabstract": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de financiamiento"),
+            ],
+            "cashflowsfromusedininvestingactivities": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de inversión"),
+                Number(-4800277000),
+            ],
+            "cashflowsfromusedininvestingactivitiesabstract": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de inversión"),
+            ],
+            "cashflowsfromusedinoperatingactivities": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de operación"),
+                Number(3990794000),
+            ],
+            "cashflowsfromusedinoperatingactivitiesabstract": Array [
+                String("flujos de efectivo procedentes de (utilizados en) actividades de operación"),
+            ],
+            "cashflowsfromusedinoperations": Array [
+                String("flujos de efectivo procedentes (utilizados en) operaciones"),
+                Number(6971889000),
+            ],
+            "cashflowsusedinobtainingcontrolofsubsidiariesorotherbusinessesclassifiedasinvestingactivities": Array [
+                String("flujos de efectivo utilizados para obtener el control de subsidiarias u otros negocios"),
+                Number(0),
+            ],
+            "cashpaymentsforfuturecontractsforwardcontractsoptioncontractsandswapcontractsclassifiedasinvestingactivities": Array [
+                String("pagos derivados de contratos de futuro, a término, de opciones y de permuta financiera"),
+                Number(0),
+            ],
+            "cashreceiptsfromfuturecontractsforwardcontractsoptioncontractsandswapcontractsclassifiedasinvestingactivities": Array [
+                String("cobros procedentes de contratos de futuro, a término, de opciones y de permuta financiera"),
+                Number(0),
+            ],
+            "cashreceiptsfromrepaymentofadvancesandloansmadetootherpartiesclassifiedasinvestingactivities": Array [
+                String("cobros procedentes del reembolso de anticipos y préstamos concedidos a terceros"),
+                Number(0),
+            ],
+            "dividendspaidclassifiedasfinancingactivities": Array [
+                String("dividendos pagados"),
+                Number(0),
+            ],
+            "dividendspaidclassifiedasoperatingactivities": Array [
+                String("dividendos pagados"),
+                Number(0),
+            ],
+            "dividendsreceivedclassifiedasinvestingactivities": Array [
+                String("dividendos recibidos"),
+                Number(0),
+            ],
+            "dividendsreceivedclassifiedasoperatingactivities": Array [
+                String("dividendos recibidos"),
+                Number(0),
+            ],
+            "effectofexchangeratechangesoncashandcashequivalents": Array [
+                String("efectos de la variación en la tasa de cambio sobre el efectivo y equivalentes al efectivo"),
+                Number(451064000),
+            ],
+            "effectofexchangeratechangesoncashandcashequivalentsabstract": Array [
+                String("efectos de la variación en la tasa de cambio sobre el efectivo y equivalentes al efectivo"),
+            ],
+            "incometaxespaidrefundclassifiedasfinancingactivities": Array [
+                String("impuestos a las ganancias reembolsados (pagados)"),
+                Number(0),
+            ],
+            "incometaxespaidrefundclassifiedasinvestingactivities": Array [
+                String("impuestos a la utilidad reembolsados (pagados)"),
+                Number(0),
+            ],
+            "incometaxespaidrefundclassifiedasoperatingactivities": Array [
+                String("impuestos a las utilidades reembolsados (pagados)"),
+                Number(4269449000),
+            ],
+            "increasedecreaseincashandcashequivalents": Array [
+                String("incremento (disminución) de efectivo y equivalentes de efectivo"),
+                Number(-2270254000),
+            ],
+            "increasedecreaseincashandcashequivalentsbeforeeffectofexchangeratechanges": Array [
+                String("incremento (disminución) de efectivo y equivalentes al efectivo, antes del efecto de los cambios en la tasa de cambio"),
+                Number(-2721318000),
+            ],
+            "interestpaidclassifiedasfinancingactivities": Array [
+                String("intereses pagados"),
+                Number(1312102000),
+            ],
+            "interestpaidclassifiedasinvestingactivities": Array [
+                String("intereses pagados"),
+                Number(0),
+            ],
+            "interestpaidclassifiedasoperatingactivities": Array [
+                String("intereses pagados"),
+                Number(-1878627000),
+            ],
+            "interestreceivedclassifiedasinvestingactivities": Array [
+                String("intereses cobrados"),
+                Number(590273000),
+            ],
+            "interestreceivedclassifiedasoperatingactivities": Array [
+                String("intereses recibidos"),
+                Number(-590273000),
+            ],
+            "operacionesdiscontinuas": Array [
+                String("operaciones discontinuas"),
+                Number(0),
+            ],
+            "otheradjustmentsfornoncashitems": Array [
+                String("otras partidas distintas al efectivo"),
+                Number(334552000),
+            ],
+            "otheradjustmentsforwhichcasheffectsareinvestingorfinancingcashflow": Array [
+                String("otros ajustes para los que los efectos sobre el efectivo son flujos de efectivo de inversión o financiamiento"),
+                Number(192517000),
+            ],
+            "otheradjustmentstoreconcileprofitloss": Array [
+                String("otros ajustes para conciliar la utilidad (pérdida)"),
+                Number(0),
+            ],
+            "othercashpaymentstoacquireequityordebtinstrumentsofotherentitiesclassifiedasinvestingactivities": Array [
+                String("otros pagos para adquirir capital o instrumentos de deuda de otras entidades"),
+                Number(0),
+            ],
+            "othercashpaymentstoacquireinterestsinjointventuresclassifiedasinvestingactivities": Array [
+                String("otros pagos para adquirir participaciones en negocios conjuntos"),
+                Number(0),
+            ],
+            "othercashreceiptsfromsalesofequityordebtinstrumentsofotherentitiesclassifiedasinvestingactivities": Array [
+                String("otros cobros por la venta de capital o instrumentos de deuda de otras entidades"),
+                Number(0),
+            ],
+            "othercashreceiptsfromsalesofinterestsinjointventuresclassifiedasinvestingactivities": Array [
+                String("otros cobros por la venta de participaciones en negocios conjuntos"),
+                Number(0),
+            ],
+            "otherinflowsoutflowsofcashclassifiedasfinancingactivities": Array [
+                String("otras entradas (salidas) de efectivo"),
+                Number(-728140000),
+            ],
+            "otherinflowsoutflowsofcashclassifiedasinvestingactivities": Array [
+                String("otras entradas (salidas) de efectivo"),
+                Number(327340000),
+            ],
+            "otherinflowsoutflowsofcashclassifiedasoperatingactivities": Array [
+                String("otras entradas (salidas) de efectivo"),
+                Number(0),
+            ],
+            "participacionenasociadasynegociosconjuntos": Array [
+                String("participación en asociadas y negocios conjuntos"),
+                Number(-153814000),
+            ],
+            "paymentsfromchangesinownershipinterestsinsubsidiaries": Array [
+                String("pagos por cambios en las participaciones en la propiedad en subsidiarias que no dan lugar a la pérdida de control"),
+                Number(0),
+            ],
+            "paymentsoffinanceleaseliabilitiesclassifiedasfinancingactivities": Array [
+                String("pagos de pasivos por arrendamientos financieros"),
+                Number(0),
+            ],
+            "paymentsofleaseliabilitiesclassifiedasfinancingactivities": Array [
+                String("pagos de pasivos por arrendamientos"),
+                Number(233394000),
+            ],
+            "paymentsofotherequityinstruments": Array [
+                String("pagos por otras aportaciones en el capital"),
+                Number(0),
+            ],
+            "paymentstoacquireorredeementitysshares": Array [
+                String("pagos por adquirir o rescatar las acciones de la entidad"),
+                Number(0),
+            ],
+            "proceedsfromborrowingsclassifiedasfinancingactivities": Array [
+                String("importes procedentes de préstamos"),
+                Number(361801000),
+            ],
+            "proceedsfromchangesinownershipinterestsinsubsidiaries": Array [
+                String("importes procedentes por cambios en las participaciones en la propiedad en subsidiarias que no dan lugar a la pérdida de control"),
+                Number(0),
+            ],
+            "proceedsfromgovernmentgrantsclassifiedasfinancingactivities": Array [
+                String("importes procedentes de subvenciones del gobierno"),
+                Number(0),
+            ],
+            "proceedsfromgovernmentgrantsclassifiedasinvestingactivities": Array [
+                String("importes procedentes de subvenciones del gobierno"),
+                Number(0),
+            ],
+            "proceedsfromissuingotherequityinstruments": Array [
+                String("importes procedentes de la emisión de otros instrumentos de capital"),
+                Number(0),
+            ],
+            "proceedsfromissuingshares": Array [
+                String("importes procedentes de la emisión de acciones"),
+                Number(0),
+            ],
+            "proceedsfromotherlongtermassetsclassifiedasinvestingactivities": Array [
+                String("recursos por ventas de otros activos a largo plazo"),
+                Number(0),
+            ],
+            "proceedsfromsalesofintangibleassetsclassifiedasinvestingactivities": Array [
+                String("importes procedentes de ventas de activos intangibles"),
+                Number(0),
+            ],
+            "proceedsfromsalesofpropertyplantandequipmentclassifiedasinvestingactivities": Array [
+                String("importes procedentes de la venta de propiedades, planta y equipo"),
+                Number(29711000),
+            ],
+            "profitloss": Array [
+                String("utilidad (pérdida) neta"),
+                Number(5491522000),
+            ],
+            "purchaseofintangibleassetsclassifiedasinvestingactivities": Array [
+                String("compras de activos intangibles"),
+                Number(384553000),
+            ],
+            "purchaseofotherlongtermassetsclassifiedasinvestingactivities": Array [
+                String("compras de otros activos a largo plazo"),
+                Number(0),
+            ],
+            "purchaseofpropertyplantandequipmentclassifiedasinvestingactivities": Array [
+                String("compras de propiedades, planta y equipo"),
+                Number(5363048000),
+            ],
+            "repaymentsofborrowingsclassifiedasfinancingactivities": Array [
+                String("reembolsos de préstamos"),
+                Number(0),
+            ],
+            "statementofcashflowsabstract": Array [
+                String("estado de flujos de efectivo"),
+            ],
+        },
+    },
+}
