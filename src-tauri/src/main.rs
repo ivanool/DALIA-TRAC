@@ -1,19 +1,28 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use dotenv::dotenv;
 use postgres::{Client, NoTls};
+use std::env;
 mod get_data;
 use get_data::{get_intradia, get_tasas_struct, get_forex, get_indices, get_top_tauri, buscar_emisoras};
 use tauri::Builder;
 
 fn main() {
-    let mut client = Client::connect(
-        "host=localhost user=garden_admin password=password dbname=dalia_db",
-        NoTls,
-    ).expect("No se pudo conectar a la base de datos");
-    let trimestre = "1T_2025";
+    dotenv().ok();
+    let host = env::var("DB_HOST").expect("DB_HOST not set");
+    let user = env::var("DB_USER").expect("DB_USER not set");
+    let password = env::var("DB_PASSWORD").expect("DB_PASSWORD not set");
+    let dbname = env::var("DB_NAME").expect("DB_NAME not set");
+    let conn_str = format!(
+        "host={} user={} password={} dbname={}",
+        host, user, password, dbname
+    );
+    let mut client = Client::connect(&conn_str, NoTls).expect("No se pudo conectar a la base de datos");
+    let trimestre = "1T_2023";
     // Llama solo a la función de flujos para depuración
-    get_data::get_flujos_financieros(&mut client, "LIVEPOL", trimestre).unwrap();
+    get_data::get_estado_resultado_trimestral(&mut client, "WALMEX", trimestre).unwrap();
     // Puedes cambiar "KOF" y el trimestre para probar otros casos
+    get_data::get_posicion_financiera(&mut client, "WALMEX", trimestre);
 }
 
 

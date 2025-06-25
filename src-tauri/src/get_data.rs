@@ -5,8 +5,11 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use tauri::command;
+use chrono::NaiveDate; 
+use dotenv::dotenv;
+use std::env;
 
-// --- Structs ---
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Emisora {
@@ -132,14 +135,14 @@ pub struct TasasResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmisoraBusqueda {
     pub razon_social: String,
-    pub emisoras: String, // ticker
+    pub emisoras: String, 
     pub serie: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SimpleTopChange {
-    pub e: String, // ticker
-    pub c: f64,    // cambio porcentual
+    pub e: String, 
+    pub c: f64,    
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -148,18 +151,22 @@ pub struct SimpleTopResponse {
     pub bajan: Vec<SimpleTopChange>,
 }
 
-// --- Funciones ---
 
 fn parse_json(s: Option<String>) -> Option<serde_json::Value> {
     s.and_then(|json_str| serde_json::from_str(&json_str).ok())
 }
 
-/// Depuración: muestra todo lo que se va a guardar y si hay error en la BD, lo imprime con los datos
+fn get_api_key() -> String {
+    dotenv().ok();
+    env::var("API_KEY").expect("API_KEY not set in .env")
+}
+
 pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
-    let url = "https://api.databursatil.com/v2/emisoras?token=10f433119085379e0dc544c3cd94e8";
+    let api_key = get_api_key();
+    let url = format!("https://api.databursatil.com/v2/emisoras?token={}", api_key);
     let client = HttpClient::new();
     let response = client
-        .get(url)
+        .get(&url)
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
@@ -172,12 +179,10 @@ pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Erro
         println!("Procesando ticker: {}", ticker);
         if let Some(obj) = inner_obj.as_object() {
             for (serie, emisora_val) in obj {
-                // Si la serie es un array, recorre cada objeto dentro del array
                 if emisora_val.is_array() {
                     if let Some(arr) = emisora_val.as_array() {
                         for sub_emisora_val in arr {
                             if let Some(emisora_obj) = sub_emisora_val.as_object() {
-                                // ...guardar como antes, usando 'serie' y los campos de emisora_obj...
                                 let razon_social = emisora_obj.get("razon_social").and_then(|v| v.as_str()).unwrap_or("").to_string();
                                 let isin = emisora_obj.get("isin").and_then(|v| v.as_str()).unwrap_or("").to_string();
                                 let bolsa = emisora_obj.get("bolsa").and_then(|v| v.as_str()).unwrap_or("").to_string();
@@ -256,7 +261,6 @@ pub fn get_ticker(pg_client: &mut Client) -> Result<(), Box<dyn std::error::Erro
                         }
                     }
                 } else if let Some(emisora_obj) = emisora_val.as_object() {
-                    // Caso normal: objeto por serie
                     let razon_social = emisora_obj.get("razon_social").and_then(|v| v.as_str()).unwrap_or("").to_string();
                     let isin = emisora_obj.get("isin").and_then(|v| v.as_str()).unwrap_or("").to_string();
                     let bolsa = emisora_obj.get("bolsa").and_then(|v| v.as_str()).unwrap_or("").to_string();
@@ -378,20 +382,21 @@ pub fn show_data(pg_client: &mut Client)-> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
-fn construir_url_intradia(emisoras: &[&str], inicio: &str, final_: &str) -> Result<String, Box<dyn std::error::Error>> {
+fn construir_url_intradia(emisoras: &[&str], inicio: &str, final_: &str, api_key: &str) -> Result<String, Box<dyn std::error::Error>> {
     if emisoras.is_empty() {
         return Err("Lista de emisoras vacía".into());
     }
     let emisoras_str = emisoras.join(",");
     let url = format!(
-        "https://api.databursatil.com/v2/intradia?token=10f433119085379e0dc544c3cd94e8&emisora_serie={}&bolsa=BMV&intervalo=1h&inicio={}&final={}",
-        emisoras_str, inicio, final_
+        "https://api.databursatil.com/v2/intradia?token={}&emisora_serie={}&bolsa=BMV&intervalo=1h&inicio={}&final={}",
+        api_key, emisoras_str, inicio, final_
     );
     Ok(url)
 }
 
 pub fn get_intradia(emi: &[&str], ini: &str, fin: &str, pg_client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
-    let url = construir_url_intradia(emi, ini, fin)?;
+    let api_key = get_api_key();
+    let url = construir_url_intradia(emi, ini, fin, &api_key)?;
     let client = HttpClient::new();
     let response = client
         .get(&url)
@@ -431,9 +436,10 @@ pub fn get_intradia(emi: &[&str], ini: &str, fin: &str, pg_client: &mut Client) 
 }
 
 pub fn get_cotizaciones(emisora: &str) -> Result<Option<Cotizacion>, Box<dyn std::error::Error>> {
+    let api_key = get_api_key();
     let url = format!(
-        "https://api.databursatil.com/v2/cotizaciones?token=10f433119085379e0dc544c3cd94e8&emisora_serie={}&concepto=p,v,u&bolsa=bmv",
-        emisora
+        "https://api.databursatil.com/v2/cotizaciones?token={}&emisora_serie={}&concepto=p,v,u&bolsa=bmv",
+        api_key, emisora
     );
     let client = HttpClient::new();
 
@@ -489,7 +495,7 @@ pub fn get_cotizaciones(emisora: &str) -> Result<Option<Cotizacion>, Box<dyn std
 }
 
 pub fn get_top() -> Result<TopResponse, Box<dyn std::error::Error>> {
-    // Obtener fecha de hoy o ayer según la hora
+    let api_key = get_api_key();
     let now = Local::now();
     let mut fecha = now.date_naive();
     if now.hour() < 7 {
@@ -497,8 +503,8 @@ pub fn get_top() -> Result<TopResponse, Box<dyn std::error::Error>> {
     }
     let fecha_str = fecha.format("%Y-%m-%d").to_string();
     let url = format!(
-        "https://api.databursatil.com/v2/top?token=10f433119085379e0dc544c3cd94e8&variables=suben,bajan,importe,volumen,operaciones&bolsa=BMV&cantidad=5&mercado=local&inicio={fecha}&final={fecha}",
-        fecha = fecha_str
+        "https://api.databursatil.com/v2/top?token={}&variables=suben,bajan,importe,volumen,operaciones&bolsa=BMV&cantidad=5&mercado=local&inicio={fecha}&final={fecha}",
+        api_key, fecha = fecha_str
     );
     let client = reqwest::blocking::Client::new();
     let response = client
@@ -539,9 +545,10 @@ pub fn get_top_tauri() -> Result<TopResponse, String> {
 
 
 pub fn get_flujos_financieros(pg_client: &mut Client, emisora: &str, trimestre: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let api_key = get_api_key();
     let url = format!(
-        "https://api.databursatil.com/v2/financieros?token=10f433119085379e0dc544c3cd94e8&emisora={}&periodo={}&financieros=flujos",
-        emisora, trimestre
+        "https://api.databursatil.com/v2/financieros?token={}&emisora={}&periodo={}&financieros=flujos",
+        api_key, emisora, trimestre
     );
     let client = HttpClient::new();
     let response = client
@@ -636,10 +643,16 @@ pub fn get_flujos_financieros(pg_client: &mut Client, emisora: &str, trimestre: 
     Ok(())
 }
 
-pub fn get_posicion_financiera(pg_client: &mut Client, emisora: &str, trimestre: &str) -> Result<(), Box<dyn std::error::Error>> {
+
+pub fn get_estado_resultado_trimestral(
+    pg_client: &mut Client,
+    emisora: &str,
+    trimestre: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let api_key = get_api_key();
     let url = format!(
-        "https://api.databursatil.com/v2/financieros?token=10f433119085379e0dc544c3cd94e8&emisora={}&periodo={}&financieros=posicion",
-        emisora, trimestre
+        "https://api.databursatil.com/v2/financieros?token={}&emisora={}&periodo={}&financieros=resultado_trimestre",
+        api_key, emisora, trimestre
     );
     let client = HttpClient::new();
     let response = client
@@ -647,20 +660,126 @@ pub fn get_posicion_financiera(pg_client: &mut Client, emisora: &str, trimestre:
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
+    
     let map: HashMap<String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("{:#?}", map);
-    if let Some(serde_json::Value::Object(valores)) = map.get("posicion") {
-        if let Some((pedriodo, datos)) = valores.iter().max_by_key(|(k, _)| *k){
-        let get_num = |key: &str| datos.get(key).and_then(|v| v.get(1)).and_then(|v| v.as_f64());
-        
+    println!("{:#?}",map);
+
+    
+    if let Some(serde_json::Value::Object(valores)) = map.get("resultado_trimestre") {
+        if let Some((periodo, datos)) = valores.iter().max_by_key(|(k, _)| *k) {
+            let get_num = |key: &str| -> Option<f64> {
+                datos.get(key)
+                    .and_then(|v| v.get(1))
+                    .and_then(|v| v.as_f64())
+            };
+            
+            let fecha = periodo.split('_').last()
+                .and_then(|fecha_str| {
+                    if fecha_str.is_empty() {
+                        None
+                    } else {                        
+                            fecha_str.parse::<i32>().ok().and_then(|year| {
+                            NaiveDate::from_ymd_opt(year, 1, 1)
+                        })
+                    }
+                });
+            let revenue = get_num("revenue");
+            let grossprofit = get_num("grossprofit");
+            let profitlossfromoperatingactivities = get_num("profitlossfromoperatingactivities");
+            let profitloss = get_num("profitloss");
+            let profitlossbeforetax = get_num("profitlossbeforetax");
+            let costofsales = get_num("costofsales");
+            let distributioncosts = get_num("distributioncost");
+            let administrativeexpense = get_num("administrativeexpense");
+            let financecosts = get_num("financecosts");
+            let financeincome = get_num("financeincome");
+            let incometaxexpensecontinuingoperations = get_num("incometaxexpensecontinuingoperations");
+            let profitlossattributabletoownersofparent = get_num("profitlossattributabletoownersofparent");
+            let basicearningslosspershare = get_num("basicearningslosspershare");
+            let dilutedearningslosspershare = get_num("dilutedearningslosspershare");
+            let otherincome = get_num("otherincome");
+            let shareofprofitlossofassociatesandjointventuresaccountedforusinge = get_num("shareofprofitlossofassociatesandjointventuresaccountedforusinge");
+            let profitlossfromdiscontinuedoperations = get_num("profitlossfromdiscontinuedoperations");
+            let depreciacion = get_num("depreciacion");
+            let fecha_sql = fecha;
+            let query = r#"
+                INSERT INTO estado_resultado_trimestral (
+                    emisora, trimestre, fecha, revenue, grossprofit, 
+                    profitlossfromoperatingactivities, profitloss, profitlossbeforetax, 
+                    costofsales, distributioncosts, administrativeexpense, financecosts, 
+                    financeincome, incometaxexpensecontinuingoperations, 
+                    profitlossattributabletoownersofparent, basicearningslosspershare, 
+                    dilutedearningslosspershare, otherincome, 
+                    shareofprofitlossofassociatesandjointventuresaccountedforusinge,
+                    profitlossfromdiscontinuedoperations, depreciacion
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 
+                    $16, $17, $18, $19, $20, $21
+                ) 
+                ON CONFLICT (emisora, trimestre) 
+                DO UPDATE SET
+                    fecha = EXCLUDED.fecha,
+                    revenue = EXCLUDED.revenue,
+                    grossprofit = EXCLUDED.grossprofit,
+                    profitlossfromoperatingactivities = EXCLUDED.profitlossfromoperatingactivities,
+                    profitloss = EXCLUDED.profitloss,
+                    profitlossbeforetax = EXCLUDED.profitlossbeforetax,
+                    costofsales = EXCLUDED.costofsales,
+                    distributioncosts = EXCLUDED.distributioncosts,
+                    administrativeexpense = EXCLUDED.administrativeexpense,
+                    financecosts = EXCLUDED.financecosts,
+                    financeincome = EXCLUDED.financeincome,
+                    incometaxexpensecontinuingoperations = EXCLUDED.incometaxexpensecontinuingoperations,
+                    profitlossattributabletoownersofparent = EXCLUDED.profitlossattributabletoownersofparent,
+                    basicearningslosspershare = EXCLUDED.basicearningslosspershare,
+                    dilutedearningslosspershare = EXCLUDED.dilutedearningslosspershare,
+                    otherincome = EXCLUDED.otherincome,
+                    shareofprofitlossofassociatesandjointventuresaccountedforusinge = EXCLUDED.shareofprofitlossofassociatesandjointventuresaccountedforusinge,
+                    profitlossfromdiscontinuedoperations = EXCLUDED.profitlossfromdiscontinuedoperations,
+                    depreciacion = EXCLUDED.depreciacion
+            "#;
+
+            pg_client.execute(
+                query,
+                &[
+                    &emisora,
+                    &trimestre,
+                    &fecha_sql, 
+                    &revenue,
+                    &grossprofit,
+                    &profitlossfromoperatingactivities,
+                    &profitloss,
+                    &profitlossbeforetax,
+                    &costofsales,
+                    &distributioncosts,
+                    &administrativeexpense,
+                    &financecosts,
+                    &financeincome,
+                    &incometaxexpensecontinuingoperations,
+                    &profitlossattributabletoownersofparent,
+                    &basicearningslosspershare,
+                    &dilutedearningslosspershare,
+                    &otherincome,
+                    &shareofprofitlossofassociatesandjointventuresaccountedforusinge,
+                    &profitlossfromdiscontinuedoperations,
+                    &depreciacion,
+                ],
+            )?;
         }
     }
+    Ok(())
 }
 
-pub fn get_resultado_trimestre(pg_client: &mut Client, emisora: &str, trimestre: &str) -> Result<(), Box<dyn std::error::Error>> {
+
+pub fn get_posicion_financiera(
+    pg_client: &mut Client,
+    emisora: &str,
+    trimestre: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let api_key = get_api_key();
     let url = format!(
-        "https://api.databursatil.com/v2/financieros?token=10f433119085379e0dc544c3cd94e8&emisora={}&periodo={}&financieros=resultado_trimestre",
-        emisora, trimestre
+        "https://api.databursatil.com/v2/financieros?token={}&emisora={}&periodo={}&financieros=posicion",
+        api_key, emisora, trimestre
     );
     let client = HttpClient::new();
     let response = client
@@ -668,40 +787,125 @@ pub fn get_resultado_trimestre(pg_client: &mut Client, emisora: &str, trimestre:
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
         .send()?
         .text()?;
+    
     let map: HashMap<String, serde_json::Value> = serde_json::from_str(&response)?;
-    println!("RESULTADO TRIMESTRAL: {:#?}", map);
-    if let Some(serde_json::Value::Object(valores)) = map.get("resultado_trimestre") {
-        for (periodo, datos) in valores {
-            let jsonb_str = serde_json::to_string(&datos)?;
-            let ingresos = datos.get("revenue").and_then(|v| v.get(1)).and_then(|v| v.as_f64());
-            let utilidad_bruta = datos.get("grossprofit").and_then(|v| v.get(1)).and_then(|v| v.as_f64());
-            let utilidad_operacion = datos.get("profitlossfromoperatingactivities").and_then(|v| v.get(1)).and_then(|v| v.as_f64());
-            let utilidad_neta = datos.get("profitloss").and_then(|v| v.get(1)).and_then(|v| v.as_f64());
-            let fecha = periodo.split('_').last().unwrap_or("");
-            let fecha_sql = match chrono::NaiveDate::parse_from_str(fecha, "%Y-%m-%d") {
-                Ok(date) => Some(date),
-                Err(e) => {
-                    println!("[WARN] Fecha inválida '{}' para {}-{}: {}. Registro omitido.", fecha, emisora, periodo, e);
-                    continue;
-                }
+    println!("{:#?}",map);
+
+    if let Some(serde_json::Value::Object(valores)) = map.get("posicion") {
+        if let Some((periodo, datos)) = valores.iter().max_by_key(|(k, _)| *k) {
+            let get_num = |key: &str| -> Option<f64> {
+                datos.get(key)
+                    .and_then(|v| v.get(1))
+                    .and_then(|v| v.as_f64())
             };
-            let query = "INSERT INTO estado_resultado_trimestre (emisora, trimestre, fecha, ingresos, utilidad_bruta, utilidad_operacion, utilidad_neta, datos) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
-                ON CONFLICT (emisora, trimestre) DO UPDATE SET fecha=EXCLUDED.fecha, ingresos=EXCLUDED.ingresos, utilidad_bruta=EXCLUDED.utilidad_bruta, utilidad_operacion=EXCLUDED.utilidad_operacion, utilidad_neta=EXCLUDED.utilidad_neta, datos=EXCLUDED.datos";
-            match pg_client.execute(query, &[&emisora, &periodo, &fecha_sql, &ingresos, &utilidad_bruta, &utilidad_operacion, &utilidad_neta, &jsonb_str]) {
-                Ok(_) => println!("Guardado en estado_resultado_trimestre: {} - {}", emisora, periodo),
-                Err(e) => println!("Error guardando en estado_resultado_trimestre: {} - {}: {}", emisora, periodo, e),
-            }
+            
+            let fecha = periodo.split('_').last()
+                .and_then(|fecha_str| {
+                    if fecha_str.is_empty() {
+                        None
+                    } else {
+                        NaiveDate::parse_from_str(fecha_str, "%Y-%m-%d").ok()
+                    }
+                });
+            let currentassets = get_num("currentassets");
+            let currentliabilities = get_num("currentliabilities");
+            let cashandcashequivalents = get_num("cashandcashequivalents");
+            let inventories = get_num("inventories");
+            let tradeandothercurrentreceivables = get_num("tradeandothercurrentreceivables");
+            let tradeandothercurrentpayables = get_num("tradeandothercurrentpayables");
+            let equity = get_num("equity");
+            let liabilities = get_num("liabilities");
+            let noncurrentliabilities = get_num("noncurrentliabilities");
+            let equityattributabletoownersofparent = get_num("equityattributabletoownersofparent");
+            let noncontrollinginterests = get_num("noncontrollinginterests");
+            let propertyplantandequipment = get_num("propertyplantandequipment");
+            let intangibleassetsotherthangoodwill = get_num("intangibleassetsotherthangoodwill");
+            let goodwill = get_num("goodwill");
+            let rightofuseassetsthatdonotmeetdefinitionofinvestmentproperty = get_num("rightofuseassetsthatdonotmeetdefinitionofinvestmentproperty");
+            let deferredtaxassets = get_num("deferredtaxassets");
+            let deferredtaxliabilities = get_num("deferredtaxliabilities");
+            let noncurrentassetsordisposalgroupsclassifiedasheldforsale = get_num("noncurrentassetsordisposalgroupsclassifiedasheldforsale");
+            let retainedearnings = get_num("retainedearnings");
+            let issuedcapital = get_num("issuedcapital");
+            let otherreserves = get_num("otherreserves");
+            let noncurrentleaseliabilities = get_num("noncurrentleaseliabilities");
+            let othernoncurrentfinancialliabilities = get_num("othernoncurrentfinancialliabilities");
+            let noncurrentprovisionsforemployeebenefits = get_num("noncurrentprovisionsforemployeebenefits");
+            let query = r#"
+                INSERT INTO estado_posicion (
+                    emisora, trimestre, fecha, currentassets, currentliabilities, cashandcashequivalents, inventories, tradeandothercurrentreceivables, tradeandothercurrentpayables, equity, liabilities, noncurrentliabilities, equityattributabletoownersofparent, noncontrollinginterests, propertyplantandequipment, intangibleassetsotherthangoodwill, goodwill, rightofuseassetsthatdonotmeetdefinitionofinvestmentproperty, deferredtaxassets, deferredtaxliabilities, noncurrentassetsordisposalgroupsclassifiedasheldforsale, retainedearnings, issuedcapital, otherreserves, noncurrentleaseliabilities, othernoncurrentfinancialliabilities, noncurrentprovisionsforemployeebenefits
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
+                )
+                ON CONFLICT (emisora, trimestre)
+                DO UPDATE SET
+                    fecha = EXCLUDED.fecha,
+                    currentassets = EXCLUDED.currentassets,
+                    currentliabilities = EXCLUDED.currentliabilities,
+                    cashandcashequivalents = EXCLUDED.cashandcashequivalents,
+                    inventories = EXCLUDED.inventories,
+                    tradeandothercurrentreceivables = EXCLUDED.tradeandothercurrentreceivables,
+                    tradeandothercurrentpayables = EXCLUDED.tradeandothercurrentpayables,
+                    equity = EXCLUDED.equity,
+                    liabilities = EXCLUDED.liabilities,
+                    noncurrentliabilities = EXCLUDED.noncurrentliabilities,
+                    equityattributabletoownersofparent = EXCLUDED.equityattributabletoownersofparent,
+                    noncontrollinginterests = EXCLUDED.noncontrollinginterests,
+                    propertyplantandequipment = EXCLUDED.propertyplantandequipment,
+                    intangibleassetsotherthangoodwill = EXCLUDED.intangibleassetsotherthangoodwill,
+                    goodwill = EXCLUDED.goodwill,
+                    rightofuseassetsthatdonotmeetdefinitionofinvestmentproperty = EXCLUDED.rightofuseassetsthatdonotmeetdefinitionofinvestmentproperty,
+                    deferredtaxassets = EXCLUDED.deferredtaxassets,
+                    deferredtaxliabilities = EXCLUDED.deferredtaxliabilities,
+                    noncurrentassetsordisposalgroupsclassifiedasheldforsale = EXCLUDED.noncurrentassetsordisposalgroupsclassifiedasheldforsale,
+                    retainedearnings = EXCLUDED.retainedearnings,
+                    issuedcapital = EXCLUDED.issuedcapital,
+                    otherreserves = EXCLUDED.otherreserves,
+                    noncurrentleaseliabilities = EXCLUDED.noncurrentleaseliabilities,
+                    othernoncurrentfinancialliabilities = EXCLUDED.othernoncurrentfinancialliabilities,
+                    noncurrentprovisionsforemployeebenefits = EXCLUDED.noncurrentprovisionsforemployeebenefits
+            "#;
+
+            pg_client.execute(
+                query,
+                &[&emisora, 
+                &trimestre,
+                 &fecha, 
+                 &currentassets, 
+                 &currentliabilities, 
+                 &cashandcashequivalents, 
+                 &inventories, &tradeandothercurrentreceivables, 
+                 &tradeandothercurrentpayables, 
+                 &equity, 
+                 &liabilities, 
+                 &noncurrentliabilities, 
+                 &equityattributabletoownersofparent, 
+                 &noncontrollinginterests, 
+                 &propertyplantandequipment, 
+                 &intangibleassetsotherthangoodwill, 
+                 &goodwill, 
+                 &rightofuseassetsthatdonotmeetdefinitionofinvestmentproperty, 
+                 &deferredtaxassets, 
+                 &deferredtaxliabilities, 
+                 &noncurrentassetsordisposalgroupsclassifiedasheldforsale, 
+                 &retainedearnings, 
+                 &issuedcapital, 
+                 &otherreserves, 
+                 &noncurrentleaseliabilities, 
+                 &othernoncurrentfinancialliabilities, 
+                 &noncurrentprovisionsforemployeebenefits],
+            )?;
         }
-    } else {
-        println!("No se encontró objeto 'resultado_trimestre' en la respuesta de la API");
     }
     Ok(())
 }
 
 
 pub fn get_indices() -> Result<IndicesResponse, Box<dyn std::error::Error>> {
+    let api_key = get_api_key();
     let url = format!(
-        "https://api.databursatil.com/v2/indices?token=10f433119085379e0dc544c3cd94e8&ticker=IPC,FTSEBIVA,SP500,DJIA"
+        "https://api.databursatil.com/v2/indices?token={}&ticker=IPC,FTSEBIVA,SP500,DJIA",
+        api_key
     );
     let client = reqwest::blocking::Client::new();
     let response = client
@@ -719,8 +923,10 @@ pub fn get_indices_tauri() -> Result<IndicesResponse, String> {
 }
 
 pub fn get_tasas_struct() -> Result<TasasResponse, Box<dyn std::error::Error>> {
+    let api_key = get_api_key();
     let url = format!(
-        "https://api.databursatil.com/v2/tasas?token=10f433119085379e0dc544c3cd94e8"
+        "https://api.databursatil.com/v2/tasas?token={}",
+        api_key
     );
     let client = reqwest::blocking::Client::new();
     let response = client
@@ -735,8 +941,10 @@ pub fn get_tasas_struct() -> Result<TasasResponse, Box<dyn std::error::Error>> {
 
 
 pub fn get_forex() -> Result<ForexResponse, Box<dyn std::error::Error>> {
+    let api_key = get_api_key();
     let url = format!(
-        "https://api.databursatil.com/v2/divisas?token=10f433119085379e0dc544c3cd94e8&ticker=USDMXN,EURMXN"
+        "https://api.databursatil.com/v2/divisas?token={}&ticker=USDMXN,EURMXN",
+        api_key
     );
     let client = reqwest::blocking::Client::new();
     let response = client
