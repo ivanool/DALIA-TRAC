@@ -19,9 +19,7 @@ fn main() {
     );
     let mut client = Client::connect(&conn_str, NoTls).expect("No se pudo conectar a la base de datos");
     let trimestre = "1T_2023";
-    // Llama solo a la función de flujos para depuración
     get_data::get_estado_resultado_trimestral(&mut client, "WALMEX", trimestre).unwrap();
-    // Puedes cambiar "KOF" y el trimestre para probar otros casos
     get_data::get_posicion_financiera(&mut client, "WALMEX", trimestre);
 }
 
