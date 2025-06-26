@@ -499,7 +499,7 @@ pub fn get_top() -> Result<TopResponse, Box<dyn std::error::Error>> {
     let now = Local::now();
     let mut fecha = now.date_naive();
     if now.hour() < 7 {
-        fecha = fecha.pred();
+        fecha = fecha.pred_opt().expect("No previous date");
     }
     let fecha_str = fecha.format("%Y-%m-%d").to_string();
     let url = format!(
@@ -561,7 +561,7 @@ pub fn get_flujos_financieros(pg_client: &mut Client, emisora: &str, trimestre: 
     if let Some(serde_json::Value::Object(valores)) = map.get("flujos") {
         if let Some((periodo, datos)) = valores.iter().max_by_key(|(k, _)| *k) {
             let get_num = |key: &str| datos.get(key).and_then(|v| v.get(1)).and_then(|v| v.as_f64());
-            let fecha_sql = Some(trimestre.to_string());
+            let _fecha_sql = Some(trimestre.to_string());
             let trimestre_sql = trimestre;
             let flujo_operacion = get_num("cashflowsfromusedinoperatingactivities");
             let utilidad_neta = get_num("profitloss");

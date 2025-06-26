@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 .env
+Caracteristicas.md
+diseño.md
 
 # Editor directories and files
 .vscode/*
