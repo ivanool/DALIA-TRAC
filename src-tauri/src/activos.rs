@@ -88,14 +88,6 @@ pub fn get_finantial_flow(
     emisora: &str, 
     trimestre: &str
 ) -> Result<HashMap<String, f64>, Box<dyn std::error::Error>> {
-    // implementation...
-}
-
-pub fn get_finantial_flow(
-    pg_client: &mut Client, 
-    emisora: &str, 
-    trimestre: &str
-) -> Result<HashMap<String, f64>, Box<dyn std::error::Error>> {
 
     // 1. Verificar existencia
     let row = pg_client.query_one(
