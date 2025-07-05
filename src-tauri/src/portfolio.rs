@@ -57,14 +57,24 @@ pub fn add_ticker(
     portafolio_id: i32,
     ticker: &str,
     emisoras: &str,
-    serie: &str
+    serie: &str,
+    fecha: Option<chrono::DateTime<chrono::Utc>>, // CAMBIO DE TIPO
 ) -> Result<i32, Error> {
-    let row = pg_client.query_one(
-        "INSERT INTO portafolio_ticker (portafolio_id, ticker, emisoras, serie) VALUES ($1, $2, $3, $4) RETURNING id",
-        &[&portafolio_id, &ticker, &emisoras, &serie],
-    )?;
-    let id: i32 = row.get(0);
-    Ok(id)
+    if let Some(fecha) = fecha {
+        let row = pg_client.query_one(
+            "INSERT INTO portafolio_ticker (portafolio_id, ticker, emisoras, serie, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+            &[&portafolio_id, &ticker, &emisoras, &serie, &fecha],
+        )?;
+        let id: i32 = row.get(0);
+        Ok(id)
+    } else {
+        let row = pg_client.query_one(
+            "INSERT INTO portafolio_ticker (portafolio_id, ticker, emisoras, serie) VALUES ($1, $2, $3, $4) RETURNING id",
+            &[&portafolio_id, &ticker, &emisoras, &serie],
+        )?;
+        let id: i32 = row.get(0);
+        Ok(id)
+    }
 }
 
 
@@ -100,7 +110,7 @@ pub fn add_transaction(
     portafolio_ticker_id: i32,
     tipo: &str,
     cantidad: i32,
-    precio: f64, // Cambiado de i32 a f64
+    precio: f64, 
 ) -> Result<(), Box<dyn std::error::Error>> {
     pg_client.execute(
         "INSERT INTO transacciones (portafolio_ticker_id, tipo, cantidad, precio) VALUES ($1, $2, $3, $4)",
@@ -255,7 +265,6 @@ pub fn filter_cashflow(
     let mut query = String::from("SELECT id, monto, tipo, fecha, descripcion FROM cashflow WHERE portafolio_id = $1");
     let mut params: Vec<&(dyn postgres::types::ToSql + Sync)> = vec![&portafolio_id];
     let mut param_idx = 2;
-    // Store owned filter values so their references live long enough
     let mut tipo_owned: Option<String> = tipo.map(|s| s.to_string());
     let mut fecha_inicio_owned: Option<NaiveDateTime> = fecha_inicio;
     let mut fecha_fin_owned: Option<NaiveDateTime> = fecha_fin;

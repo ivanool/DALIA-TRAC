@@ -1,5 +1,5 @@
 use chrono::{Local, Datelike, Timelike};
-use postgres::Client;
+use postgres::{Client, NoTls};
 use reqwest::blocking::Client as HttpClient;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
@@ -971,7 +971,8 @@ pub fn buscar_emisoras(query: String) -> Result<Vec<EmisoraBusqueda>, String> {
     let sql = r#"
         SELECT razon_social, emisoras, serie
         FROM emisoras
-        WHERE LOWER(razon_social) LIKE $1 OR LOWER(emisoras) LIKE $1
+        WHERE (LOWER(razon_social) LIKE $1 OR LOWER(emisoras) LIKE $1)
+          AND estatus = 'ACTIVA'
         ORDER BY razon_social
         LIMIT 20
     "#;

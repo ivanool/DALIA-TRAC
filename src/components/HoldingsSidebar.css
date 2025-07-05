@@ -1,0 +1,25 @@
+/* HoldingsSidebar styles */
+.holdings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.holding-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.5rem;
+  border-bottom: 1px solid #334155;
+  font-size: 1rem;
+  color: #fff;
+  background: none;
+  transition: background 0.15s;
+}
+.holding-item:hover {
+  background: #334155;
+}
+.holdings-placeholder {
+  color: #94A3B8;
+  padding: 1rem 0;
+  text-align: center;
+}

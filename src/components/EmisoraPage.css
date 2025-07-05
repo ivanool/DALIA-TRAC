@@ -1,0 +1,44 @@
+/* EmisoraPage styles */
+.emisora-page {
+  background: #1E293B;
+  color: #fff;
+  border-radius: 12px;
+  padding: 2rem 2.5rem;
+  margin: 1.5rem auto;
+  max-width: 900px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+}
+.emisora-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 2rem 0;
+  color: #94A3B8;
+}
+.emisora-info-list li {
+  margin-bottom: 0.5rem;
+}
+.estados-financieros {
+  margin-top: 2rem;
+}
+.estado-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  background: #0F172A;
+  color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.estado-table th, .estado-table td {
+  border: 1px solid #334155;
+  padding: 0.5rem 0.7rem;
+  text-align: right;
+}
+.estado-table th {
+  background: #1E293B;
+  color: #60A5FA;
+  font-weight: 600;
+}
+.estado-table tr:nth-child(even) {
+  background: #16213a;
+}
