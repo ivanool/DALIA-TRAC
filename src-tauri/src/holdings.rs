@@ -13,7 +13,6 @@ pub fn ejemplo_agregar_gmexicob(client: &mut Client, portafolio_id: i32) {
     let ticker = "ANAUN";
     let emisoras = "ANAU";
     let serie = "N";
-    // Usar DateTime<Utc> para timestamptz
     let fecha_alta_utc = Utc.with_ymd_and_hms(2025, 6, 24, 12, 0, 0).unwrap();
     let portafolio_ticker_id = match portfolio::add_ticker(client, portafolio_id, ticker, emisoras, serie, Some(fecha_alta_utc)) {
         Ok(id) => id,

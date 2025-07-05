@@ -11,13 +11,11 @@ mod clean_emisoras;
 mod activos; 
 
 fn ensure_user_exists(client: &mut Client, usuario_id: i32, nombre: &str) -> Result<(), Box<dyn std::error::Error>> {
-    // Intentar insertar el usuario
     let rows = client.execute(
         "INSERT INTO usuarios (id, nombre) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING",
         &[&usuario_id, &nombre],
     )?;
     if rows == 0 {
-        // Ya existía
         println!("Usuario '{}' (id: {}) ya existe. Iniciando sesión...", nombre, usuario_id);
     } else {
         println!("Usuario '{}' (id: {}) creado exitosamente.", nombre, usuario_id);
@@ -57,10 +55,8 @@ fn main() {
     let usuario_id = 1;
     let nombre = "Makima";
     ensure_user_exists(&mut client, usuario_id, nombre).expect("No se pudo insertar usuario");
-    //clean_emisoras::eliminar_duplicados_isin(&mut client).expect("No se pudo limpiar duplicados de ISIN");
     clean_emisoras::eliminar_duplicados_isin_hashset(&mut client).expect("No se pudo limpiar duplicados exactos de ISIN (HashSet)");
 
-    // Obtener el primer portafolio del usuario automáticamente
     let portafolio_id = match portfolio::list_portfolios(&mut client, usuario_id) {
         Ok(portafolios) if !portafolios.is_empty() => portafolios[0].0, // id entero
         _ => {
@@ -68,24 +64,16 @@ fn main() {
             return;
         }
     };
-    // --- BORRAR TODOS LOS TICKERS Y TRANSACCIONES DEL PORTAFOLIO ---
     borrar_todos_los_tickers_y_transacciones(&mut client, portafolio_id);
-    // --- FIN BORRADO ---
     let tickers = portfolio::list_tickers(&mut client, portafolio_id).unwrap_or_default();
     println!("\nAcciones actuales en el portafolio (id: {}):", portafolio_id);
     for (id, ticker, emisoras, serie) in &tickers {
         println!("id: {}, ticker: {}, emisoras: {}, serie: {}", id, ticker, emisoras, serie);
     }
 
-    // --- AGREGAR GMEXICOB DE EJEMPLO ---
-    //holdings::ejemplo_agregar_gmexicob(&mut client, portafolio_id);
-    // --- FIN AGREGADO ---
 
-    // --- LISTAR HOLDINGS ---
     holdings::listar_holdings(&mut client, portafolio_id);
-    // --- FIN LISTAR HOLDINGS ---
 
-    // --- AGREGAR USUARIO Y PORTAFOLIO ---
     let _id_hex = holdings::agregar_usuario_y_portafolio(&mut client, 1, "makima", "dalia").expect("No se pudo crear usuario y portafolio");
 
     let resultado = get_data::buscar_emisoras("LIVEPOL".to_string());
@@ -98,9 +86,7 @@ fn main() {
         },
         Err(e) => println!("Error en buscar_emisoras: {}", e),
     }
-    // --- FIN EJEMPLO ---
 
-    // --- EJEMPLO DE USO DE get_finantial_flow, get_finantial_position y get_quarterly_income_statement ---
     let emisora = "AMX";
     let trimestre = "1T_2025";
 

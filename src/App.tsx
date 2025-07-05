@@ -8,11 +8,9 @@ import { HomeIcon, ChartIcon, UserIcon, DaliaFlower } from "./components/Icons";
 import { EmisoraBusqueda, IndicesType, ForexType, TopType } from "./types";
 import useCachedData from "./hooks/useCachedData";
 
-// Usa la flor Dalia como logo animado en la barra superior
 const DaliaLogo = DaliaFlower;
 
 function App() {
-  // Eliminar estados y refs no usados
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<EmisoraBusqueda[]>([]);
   const [selectedEmpresa, setSelectedEmpresa] = useState<EmisoraBusqueda | null>(null);
