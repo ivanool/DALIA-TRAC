@@ -64,19 +64,19 @@ const EmisoraPage: React.FC<EmisoraPageProps> = ({ emisora, onBack }) => {
         <h3>Estado de Flujo</h3>
         {finLoading ? <div>Cargando...</div> : (
           flujo.length ? (
-            <table className="estado-table"><thead><tr>{Object.keys(flujo[0]||{}).map(k => <th key={k}>{k}</th>)}</tr></thead><tbody>{flujo.map((row,i) => <tr key={i}>{Object.values(row).map((v,j) => <td key={j}>{v}</td>)}</tr>)}</tbody></table>
+            <table className="estado-table"><thead><tr>{Object.keys(flujo[0]||{}).map(k => <th key={k}>{k}</th>)}</tr></thead><tbody>{flujo.map((row,i) => <tr key={i}>{Object.values(row).map((v,j) => <td key={j}>{String(v ?? '')}</td>)}</tr>)}</tbody></table>
           ) : <div>No hay datos de flujo.</div>
         )}
         <h3>Estado de Posición</h3>
         {finLoading ? <div>Cargando...</div> : (
           posicion.length ? (
-            <table className="estado-table"><thead><tr>{Object.keys(posicion[0]||{}).map(k => <th key={k}>{k}</th>)}</tr></thead><tbody>{posicion.map((row,i) => <tr key={i}>{Object.values(row).map((v,j) => <td key={j}>{v}</td>)}</tr>)}</tbody></table>
+            <table className="estado-table"><thead><tr>{Object.keys(posicion[0]||{}).map(k => <th key={k}>{k}</th>)}</tr></thead><tbody>{posicion.map((row,i) => <tr key={i}>{Object.values(row).map((v,j) => <td key={j}>{String(v ?? '')}</td>)}</tr>)}</tbody></table>
           ) : <div>No hay datos de posición.</div>
         )}
         <h3>Estado de Resultado</h3>
         {finLoading ? <div>Cargando...</div> : (
           resultado.length ? (
-            <table className="estado-table"><thead><tr>{Object.keys(resultado[0]||{}).map(k => <th key={k}>{k}</th>)}</tr></thead><tbody>{resultado.map((row,i) => <tr key={i}>{Object.values(row).map((v,j) => <td key={j}>{v}</td>)}</tr>)}</tbody></table>
+            <table className="estado-table"><thead><tr>{Object.keys(resultado[0]||{}).map(k => <th key={k}>{k}</th>)}</tr></thead><tbody>{resultado.map((row,i) => <tr key={i}>{Object.values(row).map((v,j) => <td key={j}>{String(v ?? '')}</td>)}</tr>)}</tbody></table>
           ) : <div>No hay datos de resultado.</div>
         )}
       </div>

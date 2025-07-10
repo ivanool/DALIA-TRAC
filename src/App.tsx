@@ -13,7 +13,6 @@ const DaliaLogo = DaliaFlower;
 function App() {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<EmisoraBusqueda[]>([]);
-  const [selectedEmpresa, setSelectedEmpresa] = useState<EmisoraBusqueda | null>(null);
   const [activeMenu, setActiveMenu] = useState('portafolios');
   const [indices] = useCachedData(() => invoke("get_indices_tauri"), 1200000) as [IndicesType | null, boolean];
   const [forex] = useCachedData(() => invoke("get_forex_tauri"), 1200000) as [ForexType | null, boolean];

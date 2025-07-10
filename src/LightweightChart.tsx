@@ -23,7 +23,10 @@ export default function LightweightChart({ symbol, data }: Props) {
       timeScale: { timeVisible: true, secondsVisible: false },
     });
     chartInstance.current = chart;
-    const series = chart.addLineSeries();
+    // const series = chart.addLineSeries();
+    // Para lightweight-charts v4+:
+    // @ts-ignore
+    const series = (chart as any).addLineSeries ? (chart as any).addLineSeries() : chart.addSeries({ isBuiltIn: true, type: 'Line', defaultOptions: {} });
     series.setData(data);
     return () => chart.remove();
   }, [symbol, data]);

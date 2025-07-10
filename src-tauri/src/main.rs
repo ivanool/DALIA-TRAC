@@ -42,82 +42,16 @@ fn borrar_todos_los_tickers_y_transacciones(client: &mut Client, portafolio_id: 
 
 fn main() {
     dotenv().ok();
-    let host = env::var("DB_HOST").expect("DB_HOST not set");
-    let user = env::var("DB_USER").expect("DB_USER not set");
-    let password = env::var("DB_PASSWORD").expect("DB_PASSWORD not set");
-    let dbname = env::var("DB_NAME").expect("DB_NAME not set");
-    let conn_str = format!(
-        "host={} user={} password={} dbname={}",
-        host, user, password, dbname
-    );
-    let mut client = Client::connect(&conn_str, NoTls).expect("No se pudo conectar a la base de datos");
-
-    let usuario_id = 1;
-    let nombre = "Makima";
-    ensure_user_exists(&mut client, usuario_id, nombre).expect("No se pudo insertar usuario");
-    clean_emisoras::eliminar_duplicados_isin_hashset(&mut client).expect("No se pudo limpiar duplicados exactos de ISIN (HashSet)");
-
-    let portafolio_id = match portfolio::list_portfolios(&mut client, usuario_id) {
-        Ok(portafolios) if !portafolios.is_empty() => portafolios[0].0, // id entero
-        _ => {
-            eprintln!("No hay portafolios para el usuario");
-            return;
-        }
-    };
-    borrar_todos_los_tickers_y_transacciones(&mut client, portafolio_id);
-    let tickers = portfolio::list_tickers(&mut client, portafolio_id).unwrap_or_default();
-    println!("\nAcciones actuales en el portafolio (id: {}):", portafolio_id);
-    for (id, ticker, emisoras, serie) in &tickers {
-        println!("id: {}, ticker: {}, emisoras: {}, serie: {}", id, ticker, emisoras, serie);
-    }
-
-
-    holdings::listar_holdings(&mut client, portafolio_id);
-
-    let _id_hex = holdings::agregar_usuario_y_portafolio(&mut client, 1, "makima", "dalia").expect("No se pudo crear usuario y portafolio");
-
-    let resultado = get_data::buscar_emisoras("LIVEPOL".to_string());
-    match resultado {
-        Ok(lista) => {
-            println!("\nResultados de buscar_emisoras para 'KOF':");
-            for emisora in lista {
-                println!("{} | {} | {}", emisora.razon_social, emisora.emisoras, emisora.serie);
-            }
-        },
-        Err(e) => println!("Error en buscar_emisoras: {}", e),
-    }
-
-    let emisora = "AMX";
-    let trimestre = "1T_2025";
-
-    match activos::get_finantial_flow(&mut client, emisora, trimestre) {
-        Ok(flujo) => {
-            println!("\nFlujo financiero de {} en {}:", emisora, trimestre);
-            for (k, v) in &flujo {
-                println!("{}: {}", k, v);
-            }
-        },
-        Err(e) => println!("Error al obtener flujo financiero: {}", e),
-    }
-
-    match activos::get_finantial_position(&mut client, emisora, trimestre) {
-        Ok(posicion) => {
-            println!("\nPosición financiera de {} en {}:", emisora, trimestre);
-            for (k, v) in &posicion {
-                println!("{}: {}", k, v);
-            }
-        },
-        Err(e) => println!("Error al obtener posición financiera: {}", e),
-    }
-
-    match activos::get_quarterly_income_statement(&mut client, emisora, trimestre) {
-        Ok(estado) => {
-            println!("\nEstado de resultados trimestral de {} en {}:", emisora, trimestre);
-            for (k, v) in &estado {
-                println!("{}: {}", k, v);
-            }
-        },
-        Err(e) => println!("Error al obtener estado de resultados trimestral: {}", e),
-    }
-    // --- FIN EJEMPLO ---
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            get_data::get_indices_tauri,
+            get_data::get_forex_tauri,
+            get_data::get_top_tauri,
+            get_data::get_emisora_info,
+            get_data::buscar_emisoras,
+            // get_data::get_emmisora, // Remove or correct this line if the function does not exist
+            // Agrega aquí otros comandos que quieras exponer a la UI
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }

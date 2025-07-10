@@ -215,22 +215,12 @@ pub fn get_quarterly_income_statement(
     }
 
     // 2. Solicitar los datos del estado de resultados trimesal
-    /// Executes a SQL query to retrieve a single row from the `estado_resultado_trimestral` table,
-    /// selecting various financial metrics for a given `emisora` (issuer) and `trimestre` (quarter).
-    /// The query is case-insensitive for both parameters and returns fields such as revenue,
-    /// gross profit, operating activities profit/loss, net profit/loss, cost of sales, expenses,
-    /// finance costs/income, tax expense, earnings per share, other income, share of profit/loss
-    /// from associates and joint ventures, discontinued operations profit/loss, and depreciation.
-    /// 
-    /// # Arguments
-    /// * `emisora` - The issuer's name (case-insensitive).
-    /// * `trimestre` - The quarter (case-insensitive).
-    /// 
-    /// # Returns
-    /// * `row` - A single row containing the selected financial fields for the specified issuer and quarter.
-    /// 
-    /// # Errors
-    /// Returns an error if the query fails or no matching row is found.
+    // Ejecuta una consulta SQL para obtener una fila de la tabla `estado_resultado_trimestral`,
+    // seleccionando varios campos financieros para una `emisora` y `trimestre` dados.
+    // La consulta es case-insensitive para ambos parámetros y retorna campos como revenue,
+    // gross profit, operating activities profit/loss, net profit/loss, cost of sales, expenses,
+    // finance costs/income, tax expense, earnings per share, other income, share of profit/loss
+    // from associates and joint ventures, discontinued operations profit/loss, y depreciación.
     let row = pg_client.query_one(
         "SELECT revenue, grossprofit, profitlossfromoperatingactivities, profitloss, profitlossbeforetax, \
             costofsales, distributioncosts, administrativeexpense, financecosts, financeincome, \
