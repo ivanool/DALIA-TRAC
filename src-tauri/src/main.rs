@@ -9,6 +9,7 @@ mod holdings;
 use tauri::Builder;
 mod clean_emisoras;
 mod activos; 
+mod ticker_tape;
 
 fn ensure_user_exists(client: &mut Client, usuario_id: i32, nombre: &str) -> Result<(), Box<dyn std::error::Error>> {
     let rows = client.execute(
@@ -51,6 +52,8 @@ fn main() {
             activos::get_emisora_query,
             activos::get_emisora_info,
             activos::get_trimestres_disponibles,
+            activos::get_asset_details,
+            ticker_tape::get_ticker_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

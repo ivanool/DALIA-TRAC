@@ -2,6 +2,7 @@ use tauri::command;
 use crate::get_data;
 use crate::get_data::EmisoraBusqueda;
 use postgres::{Client, Error};
+use chrono::{Datelike, NaiveDate, Local, Duration};
 use chrono::NaiveDateTime;
 use std::collections::HashMap;
 
@@ -325,3 +326,128 @@ pub fn get_emisora_info(emisora: String, trimestre: Option<String>) -> Result<St
     });
     serde_json::to_string(&result).map_err(|e| format!("JSON serialization error: {}", e))
 }
+
+// --- NUEVO: Estructuras y comando para AssetViewPage ---
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct IntradiaData {
+    pub price: f64,
+    pub open: f64,
+    pub high: f64,
+    pub low: f64,
+    pub volume: i64,
+    pub change: f64,
+    pub change_percent: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FinancialStatement {
+    pub anio: i32,
+    pub trimestre: String,
+    pub utilidad_neta: f64,
+    pub flujo_operativo: f64,
+    pub depreciacion: f64,
+    pub cambio_inventarios: f64,
+    pub impuestos_pagados: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AssetDetails {
+    pub razon_social: String,
+    pub emisoras: String,
+    pub serie: String,
+    pub intradia: IntradiaData,
+    pub quarterly_financials: Vec<FinancialStatement>,
+}
+
+#[tauri::command]
+pub fn get_asset_details(ticker: String) -> Result<AssetDetails, String> {
+    use postgres::{Client, NoTls};
+    use chrono::{Local};
+    let mut client = Client::connect(
+        "host=localhost user=garden_admin password=password dbname=dalia_db",
+        NoTls,
+    ).map_err(|e| e.to_string())?;
+
+    // 1. Info básica y API
+    let row = client.query_one(
+        "SELECT razon_social, emisoras, serie FROM emisoras WHERE emisoras = $1",
+        &[&ticker],
+    ).map_err(|e| format!("Error fetching basic info for {}: {}", ticker, e))?;
+    let emisora_db: String = row.get("emisoras");
+    let serie_db: String = row.get("serie");
+    let ticker_key = format!("{}{}", emisora_db, serie_db);
+    let cot_actual = crate::get_data::get_cotizaciones(&ticker_key).ok().flatten();
+    let mut price = 0.0;
+    let mut open = 0.0;
+    let mut high = 0.0;
+    let mut low = 0.0;
+    let mut volume = 0;
+    if let Some(cot) = &cot_actual {
+        price = cot.ultimo_precio.unwrap_or(0.0);
+        open = cot.precio_promedio.unwrap_or(0.0); // Usar precio_promedio como apertura
+        // No hay campos high/low, los dejamos en 0.0
+        volume = cot.volumen.unwrap_or(0.0) as i64;
+    }
+
+    // 2. Precio de cierre anterior (día hábil anterior)
+    let previous_close_price_query = r#"
+        SELECT precio
+        FROM intradia_data
+        WHERE emisora = $1 AND fecha_hora < current_date::timestamp
+        ORDER BY fecha_hora DESC
+        LIMIT 1;
+    "#;
+    let previous_close_price: f64 = match client.query_one(previous_close_price_query, &[&ticker_key]) {
+        Ok(row) => row.get("precio"),
+        Err(_) => {
+            println!("[INFO] No se encontró cierre anterior para {}. Usando precio de apertura.", ticker_key);
+            open
+        }
+    };
+    if price == 0.0 && previous_close_price > 0.0 {
+        price = previous_close_price;
+    }
+    let mut change = 0.0;
+    let mut change_percent = 0.0;
+    if previous_close_price > 0.0 {
+        change = price - previous_close_price;
+        change_percent = (change / previous_close_price) * 100.0;
+    }
+    let intradia = IntradiaData {
+        price,
+        open,
+        high,
+        low,
+        volume,
+        change,
+        change_percent,
+    };
+    // 3. Últimos 4 trimestres financieros (sin cambios)
+    let mut quarterly_financials = Vec::new();
+    for row in client.query(
+        "SELECT trimestre, flujo_operacion, utilidad_neta, depreciacion, cambio_inventarios, impuestos_pagados FROM estado_flujos WHERE emisora = $1 ORDER BY trimestre DESC LIMIT 4",
+        &[&ticker],
+    ).map_err(|e| format!("Error fetching financials: {}", e))? {
+        let trimestre: String = row.get("trimestre");
+        let anio = trimestre.get(0..4).and_then(|s| s.parse::<i32>().ok()).unwrap_or(0);
+        quarterly_financials.push(FinancialStatement {
+            anio,
+            trimestre: trimestre.clone(),
+            utilidad_neta: row.get("utilidad_neta"),
+            flujo_operativo: row.get("flujo_operacion"),
+            depreciacion: row.get("depreciacion"),
+            cambio_inventarios: row.get("cambio_inventarios"),
+            impuestos_pagados: row.get("impuestos_pagados"),
+        });
+    }
+    Ok(AssetDetails {
+        razon_social: row.get("razon_social"),
+        emisoras: row.get("emisoras"),
+        serie: row.get("serie"),
+        intradia,
+        quarterly_financials,
+    })
+}
+// --- FIN NUEVO ---

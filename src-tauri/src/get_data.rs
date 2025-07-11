@@ -441,15 +441,33 @@ pub fn get_cotizaciones(emisora: &str) -> Result<Option<Cotizacion>, Box<dyn std
         "https://api.databursatil.com/v2/cotizaciones?token={}&emisora_serie={}&concepto=p,v,u&bolsa=bmv",
         api_key, emisora
     );
+    println!("[get_cotizaciones] Solicitando cotización para ticker: {}", emisora);
     let client = HttpClient::new();
 
-    let response = client
+    let response = match client
         .get(&url)
         .header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64)")
-        .send()?
-        .text()?;
+        .send() {
+        Ok(resp) => match resp.text() {
+            Ok(text) => text,
+            Err(e) => {
+                println!("[get_cotizaciones] Error leyendo texto de respuesta para {}: {}", emisora, e);
+                return Ok(None);
+            }
+        },
+        Err(e) => {
+            println!("[get_cotizaciones] Error en la petición HTTP para {}: {}", emisora, e);
+            return Ok(None);
+        }
+    };
 
-    let map: HashMap<String, serde_json::Value> = serde_json::from_str(&response)?;
+    let map: HashMap<String, serde_json::Value> = match serde_json::from_str(&response) {
+        Ok(m) => m,
+        Err(e) => {
+            println!("[get_cotizaciones] Error parseando JSON para {}: {}\nRespuesta: {}", emisora, e, response);
+            return Ok(None);
+        }
+    };
 
     for (ticker, inner_obj) in map {
         if let serde_json::Value::Object(bolsas) = inner_obj {
@@ -478,6 +496,11 @@ pub fn get_cotizaciones(emisora: &str) -> Result<Option<Cotizacion>, Box<dyn std
                         }
                     }
 
+                    println!(
+                        "[get_cotizaciones] Ticker: {} | Último precio: {:?} | Precio promedio: {:?} | Volumen: {:?}",
+                        ticker, ultimo_precio, precio_promedio, volumen
+                    );
+
                     let cotizacion = Cotizacion {
                         simbolo: ticker.clone(),
                         ultimo_precio,
@@ -485,12 +508,16 @@ pub fn get_cotizaciones(emisora: &str) -> Result<Option<Cotizacion>, Box<dyn std
                         volumen,
                         fecha,
                     };
+                    if cotizacion.ultimo_precio.is_none() || cotizacion.ultimo_precio == Some(0.0) {
+                        println!("[get_cotizaciones] ADVERTENCIA: Último precio nulo o cero para {}", ticker);
+                    }
                     return Ok(Some(cotizacion));
                 }
             }
         }
     }
 
+    println!("[get_cotizaciones] No se encontró cotización para {}", emisora);
     Ok(None)
 }
 

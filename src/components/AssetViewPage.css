@@ -1,0 +1,122 @@
+.asset-view-page {
+  padding: 1rem 2rem;
+}
+
+.asset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #2a2e33;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.asset-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.asset-header .ticker-symbol {
+  font-size: 1.5rem;
+  color: var(--color-text-secondary, #888);
+  margin-left: 0.5rem;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: var(--color-accent, #00A3FF);
+  cursor: pointer;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.intradia-price {
+  text-align: right;
+}
+
+.intradia-price h2 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.intradia-price span {
+  font-size: 1.2rem;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: bold;
+}
+
+.tradingview-container {
+  margin: 2rem 0;
+}
+
+.financials-section h3 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid #2a2e33;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.financials-table-container {
+  overflow-x: auto;
+}
+
+.financials-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-background-secondary, #fff);
+}
+
+.financials-table-container th, .financials-table-container td {
+  padding: 1rem;
+  text-align: right;
+  border: 1px solid #2a2e33;
+  white-space: nowrap;
+}
+
+.financials-table-container th {
+  background-color: #181a1e;
+  font-weight: bold;
+  color: #fff;
+}
+
+.financials-table-container td:first-child,
+.financials-table-container th:first-child {
+  text-align: left;
+  font-weight: bold;
+}
+
+.asset-view-page.loading,
+.asset-view-page.error {
+  color: #888;
+  font-size: 1.2rem;
+  padding: 2rem;
+}
+
+.positive {
+  color: #00B383;
+}
+
+.negative {
+  color: #CF4F48;
+}
+
+.asset-view-fade-enter {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.asset-view-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.35s cubic-bezier(.4,0,.2,1), transform 0.35s cubic-bezier(.4,0,.2,1);
+}
+.asset-view-fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.asset-view-fade-exit-active {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.25s cubic-bezier(.4,0,.2,1), transform 0.25s cubic-bezier(.4,0,.2,1);
+}

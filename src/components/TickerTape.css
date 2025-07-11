@@ -1,66 +1,80 @@
-/* TickerTape styles */
-.ticker-tape-minimal {
-  width: 100%;
-  overflow: hidden;
-  background: #1E293B;
-  color: #fff;
-  font-family: Inter, sans-serif;
-  font-size: 1rem;
-  position: relative;
-  min-height: 36px;
-  border-bottom: 1px solid #334155;
+/* Importar una fuente monoespaciada en tu CSS principal, ej: @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap'); */
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
-.ticker-tape-inner {
+
+.ticker-wrap {
+  position: fixed;
+  top: 0;
+  left: 72px; /* Match sidebar width */
+  width: calc(100% - 72px);
+  overflow: hidden;
+  background: #f7f7f7; /* Capa superior, blanco-gris */
+  height: 40px;
   display: flex;
   align-items: center;
+  z-index: 50;
+  /* --- SEPARACIÓN VISUAL --- */
+  border-bottom: 1px solid #e5e5e5; /* Borde nítido, gris claro */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10), 0 1.5px 0 rgba(0, 0, 0, 0.04); /* Sombra sutil, varias capas */
+}
+
+.ticker-wrap:hover .ticker {
+  animation-play-state: paused; /* Pausa la animación al pasar el cursor */
+}
+
+.ticker {
+  display: inline-flex;
   white-space: nowrap;
   animation: ticker-scroll 40s linear infinite;
-  gap: 1.5rem;
 }
-@keyframes ticker-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.ticker-item {
+
+.ticker__item {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0 0.7rem;
-  border-radius: 6px;
-  transition: background 0.2s;
-  cursor: pointer;
-}
-.ticker-item:hover {
-  background: #334155;
-}
-.ticker-symbol {
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.ticker-up {
-  color: #00E6A1;
-  font-weight: 600;
-}
-.ticker-down {
-  color: #FF6B93;
-  font-weight: 600;
-}
-.ticker-separator {
-  color: #94A3B8;
-  margin: 0 0.2rem;
-}
-.ticker-tooltip {
-  position: fixed;
-  background: #1E293B;
-  color: #fff;
-  border: 1px solid #60A5FA;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
+  gap: 0.75rem;
+  padding: 0 2rem;
   font-size: 0.95rem;
-  pointer-events: none;
-  z-index: 9999;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  color: #222;
+  cursor: pointer;
+  background: none;
+  border-radius: 6px;
+  transition: background 0.15s;
 }
-.ticker-glow {
-  box-shadow: 0 0 8px #60A5FA;
+
+.ticker__item:hover {
+  background: #ececec;
+}
+
+.ticker__symbol {
+  font-weight: bold;
+  color: #111;
+}
+
+.ticker__price,
+.ticker__change {
+  font-family: 'Roboto Mono', monospace; /* Fuente profesional para números */
+}
+
+.ticker__change.positive {
+  color: #00B383;
+  font-weight: 500;
+}
+
+.ticker__change.negative {
+  color: #CF4F48;
+  font-weight: 500;
+  opacity: 1;
+}
+
+.loading {
+  color: #888;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
 }

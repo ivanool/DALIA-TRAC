@@ -1,0 +1,147 @@
+/* src/components/Sidebar.css (Actualizado a Blanco y Negro) */
+.sidebar {
+  width: 72px;
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  transition: width 0.25s cubic-bezier(.4,0,.2,1), background 0.2s;
+  color: #222;
+}
+
+/* --- Estado Expandido --- */
+.sidebar.expanded {
+  width: 220px;
+  background: #fff;
+  align-items: flex-start;
+}
+
+/* --- Logo --- */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #111;
+  cursor: pointer;
+  padding: 0 1.5rem;
+  margin-bottom: 2.5rem;
+}
+.logo-text {
+  display: none;
+  font-size: 1.3rem;
+  color: #111;
+  letter-spacing: 0.04em;
+}
+.sidebar.expanded .logo-text {
+  display: inline;
+}
+
+/* --- Sección Superior de la Sidebar --- */
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.sidebar.expanded .sidebar-top {
+  align-items: flex-start;
+}
+
+/* --- Navegación y Botones de Usuario --- */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.sidebar-nav button, .user-profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.7rem 1.2rem;
+  background: none;
+  border: none;
+  color: #444;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.18s, background 0.18s;
+  border-radius: 7px;
+  font-size: 1.08rem;
+}
+
+.sidebar-nav button:hover, .user-profile:hover {
+  background: #f2f2f2;
+  color: #000;
+}
+
+.sidebar-nav button.active {
+  background: #222;
+  color: #fff;
+}
+
+/* Texto de los botones */
+.nav-text {
+  display: none; /* Oculto por defecto */
+  white-space: nowrap;
+}
+.sidebar.expanded .nav-text {
+  display: inline; /* Visible al expandir */
+}
+
+/* Perfil de Usuario */
+.user-profile {
+  margin-top: 1.5rem;
+  background: #f7f7f7;
+  color: #444;
+  border-radius: 50px;
+  justify-content: flex-start;
+}
+.sidebar.expanded .user-profile {
+  width: 90%;
+}
+
+/* --- Tooltips personalizados para Sidebar --- */
+.sidebar-tooltip {
+  position: absolute;
+  left: 110%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #222;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  pointer-events: none;
+  opacity: 0.97;
+  z-index: 9999;
+  transition: opacity 0.15s;
+}
+.sidebar-tooltip::after {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 7px;
+  border-style: solid;
+  border-color: transparent #222 transparent transparent;
+}
+
+.sidebar-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}

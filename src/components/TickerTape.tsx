@@ -1,172 +1,72 @@
-import React, { useRef, useState, useEffect } from "react";
-import "./TickerTape.css";
+import React, { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import './TickerTape.css';
 
-interface TickerTapeProps {
-  indices: any;
-  forex: any;
-  top: any;
-  symbols?: { proName: string; title: string }[];
+interface TickerItem {
+  symbol: string;
+  price: number;
+  change: number;
+  change_percent: number;
 }
 
-const defaultSymbols = [
-  { proName: "FOREXCOM:SPXUSD", title: "S&P 500" },
-  { proName: "FOREXCOM:NSXUSD", title: "Nasdaq 100" },
-  { proName: "FX_IDC:EURUSD", title: "EUR to USD" },
-  { proName: "BITSTAMP:BTCUSD", title: "Bitcoin" },
-  { proName: "BITSTAMP:ETHUSD", title: "Ethereum" }
-];
+interface TickerTapeProps {
+  onTickerClick?: (symbol: string) => void;
+}
 
-const TickerTape: React.FC<TickerTapeProps> = ({ indices, forex, top, symbols = [] }) => {
-  const items: { symbol: string, value: number | string, change: number, type: string }[] = [];
-  if (indices) {
-    Object.entries(indices).forEach(([k, v]: any) => v && items.push({ symbol: k, value: v.u, change: v.c, type: 'Índice' }));
-  }
-  if (forex) {
-    if (forex.USDMXN) items.push({ symbol: 'USDMXN', value: forex.USDMXN.u, change: forex.USDMXN.c, type: 'Divisa' });
-    if (forex.EURMXN) items.push({ symbol: 'EURMXN', value: forex.EURMXN.u, change: forex.EURMXN.c, type: 'Divisa' });
-  }
-  if (top && top.suben) {
-    top.suben.slice(0, 5).forEach((t: any) => {
-      items.push({ symbol: t.e, value: t.u, change: t.c, type: 'Sube' });
-    });
-  }
-  if (top && top.bajan) {
-    top.bajan.slice(0, 5).forEach((t: any) => {
-      items.push({ symbol: t.e, value: t.u, change: t.c, type: 'Baja' });
-    });
-  }
-  const [minWidth, setMinWidth] = useState(0);
-  const [pauseAt, setPauseAt] = useState<number | null>(null);
-  const tapeRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
-  const [glow, setGlow] = useState(false);
-  const [reboundIndex, setReboundIndex] = useState<number | null>(null);
+const TickerTape: React.FC<TickerTapeProps> = ({ onTickerClick }) => {
+  const [items, setItems] = useState<TickerItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (tapeRef.current) {
-      setMinWidth(tapeRef.current.offsetWidth);
-    }
-  }, [indices, forex, top]);
+    const fetchTickerData = async () => {
+      try {
+        const result: TickerItem[] = await invoke('get_ticker_data');
+        setItems(result);
+      } catch (error) {
+        setItems([
+          { symbol: 'IPC', price: 52874.64, change: 150.4, change_percent: 0.28 },
+          { symbol: 'S&P 500', price: 5487.03, change: -1.5, change_percent: -0.27 },
+          { symbol: 'AMXL', price: 16.5, change: 0.25, change_percent: 1.54 },
+          { symbol: 'WALMEX.MX', price: 68.9, change: -0.1, change_percent: -0.15 },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTickerData();
+  }, []);
 
-  let repeat = 2;
-  if (typeof window !== 'undefined' && minWidth > 0) {
-    const vw = window.innerWidth;
-    repeat = Math.ceil((vw * 2.5) / minWidth);
+  const renderItem = (item: TickerItem, isClone = false) => {
+    const isPositive = item.change_percent >= 0;
+    const changeClass = isPositive ? 'positive' : 'negative';
+    const arrow = isPositive ? '▲' : '▼';
+    const key = isClone ? `${item.symbol}-clone` : item.symbol;
+    return (
+      <div
+        className="ticker__item"
+        key={key}
+        onClick={() => onTickerClick && onTickerClick(item.symbol)}
+        style={{ cursor: onTickerClick ? 'pointer' : 'default' }}
+      >
+        <span className="ticker__symbol">{item.symbol}</span>
+        <span className="ticker__price">{item.price.toFixed(2)}</span>
+        <span className={`ticker__change ${changeClass}`}>{item.change_percent.toFixed(2)}% {arrow}</span>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return <div className="ticker-wrap loading">Cargando...</div>;
   }
-  const tapeItems = Array(repeat).fill(items).flat();
-
-  useEffect(() => {
-    if (tapeRef.current) {
-      tapeRef.current.style.animation = 'none';
-      void tapeRef.current.offsetWidth;
-      tapeRef.current.style.animation = '';
-    }
-  }, [tapeItems.length]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!tapeRef.current || !containerRef.current) return;
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - containerRect.left;
-    const percent = mouseX / containerRect.width;
-    const totalWidth = tapeRef.current.scrollWidth;
-    const offset = percent * (totalWidth - containerRect.width);
-    tapeRef.current.style.animationPlayState = 'paused';
-    tapeRef.current.style.transform = `translateX(-${offset}px)`;
-    setPauseAt(offset);
-  };
-  const handleMouseLeave = () => {
-    if (tapeRef.current) {
-      tapeRef.current.style.animationPlayState = '';
-      tapeRef.current.style.transform = '';
-    }
-    setPauseAt(null);
-  };
-
-  const handleItemMouseEnter = (e: React.MouseEvent, t: any, i: number) => {
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    setTooltip({
-      x: rect.left + rect.width / 2,
-      y: rect.top,
-      text: `${t.symbol} | ${t.change >= 0 ? '+' : ''}${t.change}%`,
-    });
-    setGlow(true);
-    setReboundIndex(i);
-  };
-  const handleItemMouseLeave = () => {
-    setTooltip(null);
-    setGlow(false);
-    setReboundIndex(null);
-  };
-
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.innerHTML = "";
-      const script = document.createElement("script");
-      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        symbols: symbols.length > 0 ? symbols : defaultSymbols,
-        showSymbolLogo: true,
-        colorTheme: "dark",
-        isTransparent: true,
-        displayMode: "adaptive",
-        locale: "es"
-      });
-      containerRef.current.appendChild(script);
-    }
-  }, [symbols]);
 
   return (
-    <>
-      <div
-        className={`ticker-tape-minimal${glow ? ' ticker-glow' : ''}`}
-        ref={containerRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div
-          className="ticker-tape-inner"
-          ref={tapeRef}
-          style={pauseAt !== null ? { animationPlayState: 'paused' } : {}}
-        >
-          {tapeItems.map((t, i) => (
-            <span
-              className={`ticker-item${reboundIndex === i ? ' ticker-rebound' : ''}`}
-              key={i}
-              onMouseEnter={e => handleItemMouseEnter(e, t, i)}
-              onMouseLeave={handleItemMouseLeave}
-            >
-              <span className="ticker-symbol">{t.symbol}</span>
-              <span>{t.value !== undefined ? t.value : '-'}</span>
-              <span className={t.change >= 0 ? "ticker-up" : "ticker-down"}>
-                {t.change >= 0 ? (
-                  <>
-                    <span style={{color:'#4caf50',fontWeight:700}}>▲</span> +{t.change}%
-                  </>
-                ) : (
-                  <>
-                    <span style={{color:'#ff5722',fontWeight:700}}>▼</span> {t.change}%
-                  </>
-                )}
-              </span>
-              <span className="ticker-separator">·</span>
-            </span>
-          ))}
-        </div>
-        {tooltip && (
-          <div
-            className="ticker-tooltip"
-            style={{ left: tooltip.x, top: tooltip.y - 32 }}
-          >
-            {tooltip.text}
-          </div>
-        )}
+    <div className="ticker-wrap">
+      <div className="ticker">
+        {/* Renderizamos la lista dos veces para la animación de bucle infinito */}
+        {items.map(item => renderItem(item, false))}
+        {items.map(item => renderItem(item, true))}
       </div>
-      <div className="tradingview-widget-container" ref={containerRef}>
-        <div className="tradingview-widget-container__widget"></div>
-      </div>
-    </>
+    </div>
   );
 };
 
