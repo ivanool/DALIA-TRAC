@@ -252,3 +252,76 @@ pub fn get_quarterly_income_statement(
 
     Ok(estado_resultado)
 }
+
+#[tauri::command]
+pub fn get_trimestres_disponibles(emisora: String) -> Result<Vec<String>, String> {
+    use postgres::{Client, NoTls};
+    let mut client = Client::connect(
+        "host=localhost user=garden_admin password=password dbname=dalia_db",
+        NoTls,
+    ).map_err(|e| e.to_string())?;
+    // Buscar en las tres tablas y unir los trimestres únicos
+    let mut trimestres = std::collections::HashSet::new();
+    for tabla in ["estado_flujos", "estado_posicion", "estado_resultado_trimestral"] {
+        let sql = format!("SELECT DISTINCT trimestre FROM public.{} WHERE LOWER(emisora) = LOWER($1)", tabla);
+        let rows = client.query(&sql, &[&emisora]).map_err(|e| e.to_string())?;
+        for row in rows {
+            let t: String = row.get(0);
+            trimestres.insert(t);
+        }
+    }
+    let mut trimestres_vec: Vec<String> = trimestres.into_iter().collect();
+    trimestres_vec.sort();
+    Ok(trimestres_vec)
+}
+
+#[tauri::command]
+pub fn get_emisora_info(emisora: String, trimestre: Option<String>) -> Result<String, String> {
+    use serde_json::json;
+    let mut client = match postgres::Client::connect(
+        "host=localhost user=garden_admin password=password dbname=dalia_db",
+        postgres::NoTls,
+    ) {
+        Ok(c) => c,
+        Err(e) => return Err(format!("DB connection error: {}", e)),
+    };
+
+    // Obtener los 4 trimestres más recientes si no se especifica
+    let trimestres: Vec<String> = if let Some(t) = trimestre {
+        vec![t]
+    } else {
+        let sql = "SELECT DISTINCT trimestre FROM public.estado_flujos WHERE LOWER(emisora) = LOWER($1) ORDER BY trimestre DESC LIMIT 4";
+        let rows = client.query(sql, &[&emisora]).map_err(|e| e.to_string())?;
+        let mut ts: Vec<String> = rows.iter().map(|row| row.get(0)).collect();
+        ts.sort();
+        ts
+    };
+
+    let mut resultados = Vec::new();
+    for t in &trimestres {
+        let cashflow = match get_finantial_flow(&mut client, &emisora, t) {
+            Ok(data) => data,
+            Err(e) => return Err(format!("Error getting financial flow for {t}: {}", e)),
+        };
+        let position = match get_finantial_position(&mut client, &emisora, t) {
+            Ok(data) => data,
+            Err(e) => return Err(format!("Error getting financial position for {t}: {}", e)),
+        };
+        let income = match get_quarterly_income_statement(&mut client, &emisora, t) {
+            Ok(data) => data,
+            Err(e) => return Err(format!("Error getting income statement for {t}: {}", e)),
+        };
+        resultados.push(json!({
+            "trimestre": t,
+            "cashflow": cashflow,
+            "position": position,
+            "income": income
+        }));
+    }
+    let result = json!({
+        "emisora": emisora,
+        "trimestres": trimestres,
+        "datos": resultados
+    });
+    serde_json::to_string(&result).map_err(|e| format!("JSON serialization error: {}", e))
+}

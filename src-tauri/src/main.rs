@@ -47,10 +47,10 @@ fn main() {
             get_data::get_indices_tauri,
             get_data::get_forex_tauri,
             get_data::get_top_tauri,
-            get_data::get_emisora_info,
             get_data::buscar_emisoras,
-            // get_data::get_emmisora, // Remove or correct this line if the function does not exist
-            // Agrega aquí otros comandos que quieras exponer a la UI
+            activos::get_emisora_query,
+            activos::get_emisora_info,
+            activos::get_trimestres_disponibles,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

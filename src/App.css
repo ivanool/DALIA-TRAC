@@ -18,12 +18,22 @@
   --color-text-main: #0e0e0e;
   --color-text-secondary: #212121;
   --color-detail: #ffc107;
+
+  --color-background: #101419;
+  --color-background-secondary: #1C2127;
+  --color-text: #E0E0E0;
+  --color-text-secondary: #888E95;
+  --color-accent: #00A3FF;
+  --color-positive: #00B383;
+  --color-negative: #D94D4D;
+
   font-family: 'Inter', 'Montserrat', Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
+  line-height: 1.5;
   font-weight: 400;
-  color: var(--color-text-main);
-  background-color: var(--color-bg-light);
+  color-scheme: light dark;
+  color: var(--color-text);
+  background-color: var(--color-background);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

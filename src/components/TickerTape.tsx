@@ -5,9 +5,18 @@ interface TickerTapeProps {
   indices: any;
   forex: any;
   top: any;
+  symbols?: { proName: string; title: string }[];
 }
 
-const TickerTape: React.FC<TickerTapeProps> = ({ indices, forex, top }) => {
+const defaultSymbols = [
+  { proName: "FOREXCOM:SPXUSD", title: "S&P 500" },
+  { proName: "FOREXCOM:NSXUSD", title: "Nasdaq 100" },
+  { proName: "FX_IDC:EURUSD", title: "EUR to USD" },
+  { proName: "BITSTAMP:BTCUSD", title: "Bitcoin" },
+  { proName: "BITSTAMP:ETHUSD", title: "Ethereum" }
+];
+
+const TickerTape: React.FC<TickerTapeProps> = ({ indices, forex, top, symbols = [] }) => {
   const items: { symbol: string, value: number | string, change: number, type: string }[] = [];
   if (indices) {
     Object.entries(indices).forEach(([k, v]: any) => v && items.push({ symbol: k, value: v.u, change: v.c, type: 'Índice' }));
@@ -90,51 +99,74 @@ const TickerTape: React.FC<TickerTapeProps> = ({ indices, forex, top }) => {
     setReboundIndex(null);
   };
 
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.innerHTML = "";
+      const script = document.createElement("script");
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        symbols: symbols.length > 0 ? symbols : defaultSymbols,
+        showSymbolLogo: true,
+        colorTheme: "dark",
+        isTransparent: true,
+        displayMode: "adaptive",
+        locale: "es"
+      });
+      containerRef.current.appendChild(script);
+    }
+  }, [symbols]);
+
   return (
-    <div
-      className={`ticker-tape-minimal${glow ? ' ticker-glow' : ''}`}
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
+    <>
       <div
-        className="ticker-tape-inner"
-        ref={tapeRef}
-        style={pauseAt !== null ? { animationPlayState: 'paused' } : {}}
+        className={`ticker-tape-minimal${glow ? ' ticker-glow' : ''}`}
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
-        {tapeItems.map((t, i) => (
-          <span
-            className={`ticker-item${reboundIndex === i ? ' ticker-rebound' : ''}`}
-            key={i}
-            onMouseEnter={e => handleItemMouseEnter(e, t, i)}
-            onMouseLeave={handleItemMouseLeave}
-          >
-            <span className="ticker-symbol">{t.symbol}</span>
-            <span>{t.value !== undefined ? t.value : '-'}</span>
-            <span className={t.change >= 0 ? "ticker-up" : "ticker-down"}>
-              {t.change >= 0 ? (
-                <>
-                  <span style={{color:'#4caf50',fontWeight:700}}>▲</span> +{t.change}%
-                </>
-              ) : (
-                <>
-                  <span style={{color:'#ff5722',fontWeight:700}}>▼</span> {t.change}%
-                </>
-              )}
-            </span>
-            <span className="ticker-separator">·</span>
-          </span>
-        ))}
-      </div>
-      {tooltip && (
         <div
-          className="ticker-tooltip"
-          style={{ left: tooltip.x, top: tooltip.y - 32 }}
+          className="ticker-tape-inner"
+          ref={tapeRef}
+          style={pauseAt !== null ? { animationPlayState: 'paused' } : {}}
         >
-          {tooltip.text}
+          {tapeItems.map((t, i) => (
+            <span
+              className={`ticker-item${reboundIndex === i ? ' ticker-rebound' : ''}`}
+              key={i}
+              onMouseEnter={e => handleItemMouseEnter(e, t, i)}
+              onMouseLeave={handleItemMouseLeave}
+            >
+              <span className="ticker-symbol">{t.symbol}</span>
+              <span>{t.value !== undefined ? t.value : '-'}</span>
+              <span className={t.change >= 0 ? "ticker-up" : "ticker-down"}>
+                {t.change >= 0 ? (
+                  <>
+                    <span style={{color:'#4caf50',fontWeight:700}}>▲</span> +{t.change}%
+                  </>
+                ) : (
+                  <>
+                    <span style={{color:'#ff5722',fontWeight:700}}>▼</span> {t.change}%
+                  </>
+                )}
+              </span>
+              <span className="ticker-separator">·</span>
+            </span>
+          ))}
         </div>
-      )}
-    </div>
+        {tooltip && (
+          <div
+            className="ticker-tooltip"
+            style={{ left: tooltip.x, top: tooltip.y - 32 }}
+          >
+            {tooltip.text}
+          </div>
+        )}
+      </div>
+      <div className="tradingview-widget-container" ref={containerRef}>
+        <div className="tradingview-widget-container__widget"></div>
+      </div>
+    </>
   );
 };
 

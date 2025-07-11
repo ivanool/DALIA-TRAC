@@ -1,12 +1,9 @@
 /* EmisoraPage styles */
 .emisora-page {
-  background: #1E293B;
-  color: #fff;
-  border-radius: 12px;
-  padding: 2rem 2.5rem;
-  margin: 1.5rem auto;
-  max-width: 900px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+  background: var(--color-background);
+  color: var(--color-text);
+  min-height: 100vh;
+  padding: 2rem 0 4rem 0;
 }
 .emisora-info-list {
   list-style: none;
@@ -17,28 +14,122 @@
 .emisora-info-list li {
   margin-bottom: 0.5rem;
 }
+.financial-section h3 {
+  color: var(--color-accent);
+  border-bottom: 1px solid var(--color-background-secondary);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
 .estados-financieros {
-  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 .estado-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 2rem;
-  background: #0F172A;
-  color: #fff;
+  background: var(--color-background-secondary);
+  color: var(--color-text);
   border-radius: 8px;
-  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px #000a;
 }
 .estado-table th, .estado-table td {
-  border: 1px solid #334155;
-  padding: 0.5rem 0.7rem;
+  padding: 0.5rem 1rem;
   text-align: right;
+  border-bottom: 1px solid #222b;
 }
 .estado-table th {
-  background: #1E293B;
-  color: #60A5FA;
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  background: var(--color-background-secondary);
+  text-align: right;
 }
 .estado-table tr:nth-child(even) {
   background: #16213a;
+}
+.estado-table th:first-child, .estado-table td:first-child {
+  text-align: left;
+  color: var(--color-text-secondary);
+}
+.estado-table tr:last-child td {
+  border-bottom: none;
+}
+button {
+  background: var(--color-background-secondary);
+  color: var(--color-accent);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: background 0.2s;
+}
+button:hover {
+  background: #232a33;
+}
+.tradingview-style-table {
+  border-radius: 8px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.88rem;
+  box-shadow: 0 2px 8px #000a;
+  min-width: 340px;
+  background: var(--color-background-secondary);
+  table-layout: fixed;
+}
+.tradingview-style-table th, .tradingview-style-table td {
+  padding: 0.18rem 0.35rem;
+  border-bottom: 1px solid #232a33;
+  white-space: nowrap;
+  background-clip: padding-box;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tradingview-style-table th {
+  background: var(--color-background-secondary);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.tradingview-style-table td {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.tradingview-style-table tr:nth-child(even) td {
+  background: rgba(28,33,39,0.95);
+}
+.tradingview-style-table tr:nth-child(odd) td {
+  background: rgba(16,20,25,0.95);
+}
+.tradingview-style-table td, .tradingview-style-table th {
+  border-right: 1px solid #232a33;
+}
+.tradingview-style-table th:last-child, .tradingview-style-table td:last-child {
+  border-right: none;
+}
+
+@media (max-width: 900px) {
+  .estados-financieros {
+    gap: 1rem;
+  }
+  .estado-table th, .estado-table td {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.95rem;
+  }
+  .tradingview-style-table {
+    font-size: 0.82rem;
+    min-width: 220px;
+  }
+  .tradingview-style-table th, .tradingview-style-table td {
+    padding: 0.12rem 0.18rem;
+    max-width: 60px;
+  }
 }
