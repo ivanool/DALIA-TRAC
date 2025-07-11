@@ -31,7 +31,6 @@ pub struct PortfolioSummary {
     total_value: f64,
     total_pnl: f64,
     total_pnl_percent: f64,
-    cash_balance: f64,
     holdings: Vec<Holding>,
 }
 
@@ -62,17 +61,6 @@ pub fn add_portfolio_transaction(
         &[&user_id, &ticker, &transaction_type, &quantity, &price, &transaction_date, &total_amount],
     ).map_err(|e| e.to_string())?;
 
-    let cash_change = if transaction_type.to_uppercase() == "BUY" {
-        -total_amount
-    } else {
-        total_amount
-    };
-
-    db_transaction.execute(
-        "UPDATE portfolio_cash SET balance = balance + $1 WHERE user_id = $2",
-        &[&cash_change, &user_id],
-    ).map_err(|e| e.to_string())?;
-
     db_transaction.commit().map_err(|e| e.to_string())?;
 
     Ok(())
@@ -81,8 +69,6 @@ pub fn add_portfolio_transaction(
 #[tauri::command]
 pub fn get_portfolio_summary(user_id: i32) -> Result<PortfolioSummary, String> {
     let mut client = connect_db()?;
-
-    let cash_balance = get_cash_balance(&mut client, user_id)?;
 
     let mut holdings_map: HashMap<String, (f64, f64)> = HashMap::new();
     for row in client.query("SELECT ticker, quantity, total_amount FROM portfolio_transactions WHERE user_id = $1 AND transaction_type IN ('BUY', 'SELL')", &[&user_id]).map_err(|e| e.to_string())? {
@@ -96,7 +82,7 @@ pub fn get_portfolio_summary(user_id: i32) -> Result<PortfolioSummary, String> {
     }
 
     let mut holdings: Vec<Holding> = Vec::new();
-    let mut total_portfolio_value = cash_balance;
+    let mut total_portfolio_value = 0.0;
     let mut total_portfolio_cost = 0.0;
 
     for (ticker, (quantity, total_cost)) in holdings_map.iter() {
@@ -121,14 +107,13 @@ pub fn get_portfolio_summary(user_id: i32) -> Result<PortfolioSummary, String> {
         }
     }
 
-    let total_pnl = total_portfolio_value - total_portfolio_cost - cash_balance;
+    let total_pnl = total_portfolio_value - total_portfolio_cost;
     let total_pnl_percent = if total_portfolio_cost > 0.0 { (total_pnl / total_portfolio_cost) * 100.0 } else { 0.0 };
 
     Ok(PortfolioSummary {
         total_value: total_portfolio_value,
         total_pnl,
         total_pnl_percent,
-        cash_balance,
         holdings,
     })
 }
@@ -139,12 +124,6 @@ pub fn get_portfolio_summary(user_id: i32) -> Result<PortfolioSummary, String> {
 fn connect_db() -> Result<Client, String> {
     Client::connect("host=localhost user=garden_admin password=password dbname=dalia_db", NoTls)
         .map_err(|e| format!("DB connection error: {}", e))
-}
-
-fn get_cash_balance(client: &mut Client, user_id: i32) -> Result<f64, String> {
-    let row = client.query_one("SELECT balance FROM portfolio_cash WHERE user_id = $1", &[&user_id])
-        .map_err(|e| e.to_string())?;
-    Ok(row.get("balance"))
 }
 
 fn get_market_price(ticker: &str) -> Result<f64, Error> {
@@ -251,4 +230,93 @@ pub fn add_portfolio(
         &[&id, &usuario_id, &nombre],
     )?;
     Ok(id)
+}
+
+// --- Gestión profesional de portafolios ---
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Portfolio {
+    pub id: i32,
+    pub nombre: String,
+    pub id_hex: String,
+}
+
+#[tauri::command]
+pub fn get_portfolios(usuario_id: i32) -> Result<Vec<Portfolio>, String> {
+    let mut client = connect_db()?;
+    let rows = client.query(
+        "SELECT id, nombre, id_hex FROM portafolios WHERE usuario_id = $1 ORDER BY id",
+        &[&usuario_id]
+    ).map_err(|e| format!("Error fetching portfolios: {}", e))?;
+
+    let portfolios = rows.into_iter().map(|row| Portfolio {
+        id: row.get("id"),
+        nombre: row.get("nombre"),
+        id_hex: row.get("id_hex"),
+    }).collect();
+
+    Ok(portfolios)
+}
+
+#[tauri::command]
+pub fn create_portfolio(usuario_id: i32, nombre: String) -> Result<Portfolio, String> {
+    println!("[create_portfolio] usuario_id: {}, nombre: {}", usuario_id, nombre);
+    let mut client = connect_db()?;
+    let id_hex = format!("{:09x}", rand::random::<u32>());
+    let row = match client.query_one(
+        "INSERT INTO portafolios (id_hex, usuario_id, nombre) VALUES ($1, $2, $3) RETURNING id, nombre, id_hex",
+        &[&id_hex, &usuario_id, &nombre]
+    ) {
+        Ok(row) => {
+            println!("[create_portfolio] Portafolio creado correctamente");
+            row
+        },
+        Err(e) => {
+            println!("[create_portfolio] Error al crear portafolio: {}", e);
+            return Err(e.to_string());
+        }
+    };
+    Ok(Portfolio {
+        id: row.get("id"),
+        nombre: row.get("nombre"),
+        id_hex: row.get("id_hex"),
+    })
+}
+
+// --- Gestión de usuarios ---
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Usuario {
+    pub id: i32,
+    pub nombre: String,
+    pub email: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_users() -> Result<Vec<Usuario>, String> {
+    let mut client = connect_db()?;
+    let rows = client.query(
+        "SELECT id, nombre, email FROM usuarios ORDER BY id",
+        &[]
+    ).map_err(|e| format!("Error fetching users: {}", e))?;
+
+    let usuarios = rows.into_iter().map(|row| Usuario {
+        id: row.get("id"),
+        nombre: row.get("nombre"),
+        email: row.get("email"),
+    }).collect();
+
+    Ok(usuarios)
+}
+
+#[tauri::command]
+pub fn create_user(nombre: String, email: String) -> Result<Usuario, String> {
+    let mut client = connect_db()?;
+    let row = client.query_one(
+        "INSERT INTO usuarios (nombre, email) VALUES ($1, $2) RETURNING id, nombre, email",
+        &[&nombre, &email]
+    ).map_err(|e| e.to_string())?;
+    Ok(Usuario {
+        id: row.get("id"),
+        nombre: row.get("nombre"),
+        email: row.get("email"),
+    })
 }

@@ -7,13 +7,15 @@ import EmisoraPage from './components/EmisoraPage';
 import TickerTape from './components/TickerTape';
 import AssetViewPage from './components/AssetViewPage';
 import SearchBar from './components/SearchBar';
+import UserSelectorPage from './components/UserSelectorPage';
+import PortfolioSelectorPage from './components/PortfolioSelectorPage';
 
 type View = 'search' | 'portfolio' | 'settings';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('portfolio');
-  const [userId] = useState(1); // Simulación de usuario
-  const [portfolioId] = useState(1); // Simulación de portafolio
+  const [userId, setUserId] = useState<number | null>(null);
+  const [portfolioId, setPortfolioId] = useState<number | null>(null);
   const [selectedEmisora, setSelectedEmisora] = useState<any>(null);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -51,6 +53,16 @@ function App() {
         );
     }
   };
+
+  // Si no hay usuario seleccionado, mostrar pantalla de selección de usuario
+  if (!userId) {
+    return <UserSelectorPage onUserSelected={setUserId} />;
+  }
+
+  // Si no hay portafolio seleccionado, mostrar pantalla de selección de portafolio
+  if (!portfolioId) {
+    return <PortfolioSelectorPage userId={userId} onPortfolioSelected={setPortfolioId} />;
+  }
 
   return (
     <div className="app-layout">

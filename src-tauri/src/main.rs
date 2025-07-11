@@ -54,6 +54,10 @@ fn main() {
             activos::get_trimestres_disponibles,
             activos::get_asset_details,
             ticker_tape::get_ticker_data,
+            portfolio::get_users,
+            portfolio::create_user,
+            portfolio::get_portfolios,
+            portfolio::create_portfolio,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
