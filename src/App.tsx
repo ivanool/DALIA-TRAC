@@ -14,11 +14,44 @@ type View = 'search' | 'portfolio' | 'settings';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('portfolio');
-  const [userId, setUserId] = useState<number | null>(null);
-  const [portfolioId, setPortfolioId] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [portfolio_id, setPortfolioId] = useState<number | null>(null);
   const [selectedEmisora, setSelectedEmisora] = useState<any>(null);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+
+  // Pantalla de bienvenida
+  if (showWelcome) {
+    return (
+      <div className="welcome-screen" style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh'}}>
+        <img src="/vite.svg" alt="Logo" style={{width:80,marginBottom:24}} />
+        <h1>Bienvenido a DaliaTrac</h1>
+        <p>Gestión de portafolios financieros de manera sencilla y profesional.</p>
+        <button style={{marginTop:32}} onClick={()=>setShowWelcome(false)}>Comenzar</button>
+      </div>
+    );
+  }
+
+  // Selección de usuario
+  if (!selectedUser) {
+    return <UserSelectorPage onUserSelected={setSelectedUser} />;
+  }
+
+  // Selección de portafolio
+  if (!portfolio_id) {
+    return (
+      <div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'1rem'}}>
+          <span>Usuario: <b>{selectedUser.nombre}</b> <button onClick={()=>{setSelectedUser(null);setPortfolioId(null);}}>Cerrar sesión</button></span>
+        </div>
+        <PortfolioSelectorPage userId={selectedUser.id} onPortfolioSelected={p => setPortfolioId(p.id)} />
+      </div>
+    );
+  }
+
+  // Si portfolio_id es null o undefined, no renderizar PortfolioPage
+  if (portfolio_id == null) return null;
 
   const handleNavigation = (view: View) => {
     setCurrentView(view);
@@ -37,7 +70,7 @@ function App() {
   const renderMainContent = () => {
     switch (currentView) {
       case 'portfolio':
-        return <PortfolioPage portfolioId={portfolioId} userId={userId} />;
+        return <PortfolioPage portfolio_id={portfolio_id} />;
       case 'settings':
         return <div style={{padding:'2rem'}}><h1>Configuración</h1><p>Próximamente...</p></div>;
       case 'search':
@@ -53,16 +86,6 @@ function App() {
         );
     }
   };
-
-  // Si no hay usuario seleccionado, mostrar pantalla de selección de usuario
-  if (!userId) {
-    return <UserSelectorPage onUserSelected={setUserId} />;
-  }
-
-  // Si no hay portafolio seleccionado, mostrar pantalla de selección de portafolio
-  if (!portfolioId) {
-    return <PortfolioSelectorPage userId={userId} onPortfolioSelected={setPortfolioId} />;
-  }
 
   return (
     <div className="app-layout">

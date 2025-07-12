@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 interface Props {
   open: boolean;
   onClose: () => void;
-  portfolioId: number;
+  portfolio_id: number;
   userId: number;
   onTransactionAdded?: () => void;
 }
@@ -17,7 +17,7 @@ const transactionTypes = [
   { value: "WITHDRAWAL", label: "Retiro" },
 ];
 
-const AddTransactionModal: React.FC<Props> = ({ open, onClose, portfolioId, userId, onTransactionAdded }) => {
+const AddTransactionModal: React.FC<Props> = ({ open, onClose, portfolio_id, userId, onTransactionAdded }) => {
   const [ticker, setTicker] = useState("");
   const [type, setType] = useState("BUY");
   const [quantity, setQuantity] = useState(0);
@@ -54,7 +54,7 @@ const AddTransactionModal: React.FC<Props> = ({ open, onClose, portfolioId, user
     setError(null);
     try {
       await invoke("add_portfolio_transaction", {
-        portfolio_id: portfolioId,
+        portfolio_id: portfolio_id,
         user_id: userId,
         ticker,
         transaction_type: type,

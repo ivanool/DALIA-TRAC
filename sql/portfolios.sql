@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS public.portafolios
 (
     id integer NOT NULL DEFAULT nextval('portafolios_id_seq'::regclass),
-    usuario_id integer,
+    usuario_id integer, -- restaurado a integer
     nombre text COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),

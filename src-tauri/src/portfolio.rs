@@ -241,26 +241,52 @@ pub struct Portfolio {
 }
 
 #[tauri::command]
-pub fn get_portfolios(usuario_id: i32) -> Result<Vec<Portfolio>, String> {
+pub fn get_portfolios() -> Result<Vec<Portfolio>, String> {
     let mut client = connect_db()?;
+    // Buscar usuario MAKIMA
+    let row = client.query_opt("SELECT id FROM usuarios WHERE nombre = $1", &[&"MAKIMA"]).map_err(|e| e.to_string())?;
+    let usuario_id = if let Some(row) = row {
+        row.get::<_, i32>(0)
+    } else {
+        // Si no existe, lo crea
+        let row = client.query_one("INSERT INTO usuarios (nombre) VALUES ($1) RETURNING id", &[&"MAKIMA"]).map_err(|e| e.to_string())?;
+        row.get::<_, i32>(0)
+    };
     let rows = client.query(
         "SELECT id, nombre, id_hex FROM portafolios WHERE usuario_id = $1 ORDER BY id",
         &[&usuario_id]
     ).map_err(|e| format!("Error fetching portfolios: {}", e))?;
-
     let portfolios = rows.into_iter().map(|row| Portfolio {
         id: row.get("id"),
         nombre: row.get("nombre"),
         id_hex: row.get("id_hex"),
     }).collect();
-
     Ok(portfolios)
 }
 
 #[tauri::command]
-pub fn create_portfolio(usuario_id: i32, nombre: String) -> Result<Portfolio, String> {
-    println!("[create_portfolio] usuario_id: {}, nombre: {}", usuario_id, nombre);
+pub fn create_portfolio(nombre: String) -> Result<Portfolio, String> {
+    println!("[create_portfolio] nombre: {} (usuario fijo: MAKIMA)", nombre);
     let mut client = connect_db()?;
+    // Buscar usuario MAKIMA
+    let row = client.query_opt("SELECT id FROM usuarios WHERE nombre = $1", &[&"MAKIMA"]).map_err(|e| e.to_string())?;
+    let usuario_id = if let Some(row) = row {
+        row.get::<_, i32>(0)
+    } else {
+        // Si no existe, lo crea
+        let row = client.query_one("INSERT INTO usuarios (nombre) VALUES ($1) RETURNING id", &[&"MAKIMA"]).map_err(|e| e.to_string())?;
+        row.get::<_, i32>(0)
+    };
+    println!("[create_portfolio] usuario_id de MAKIMA: {}", usuario_id);
+    // Verifica si ya existe un portafolio con ese nombre para el usuario
+    let exists = client.query_one(
+        "SELECT 1 FROM portafolios WHERE usuario_id = $1 AND nombre = $2",
+        &[&usuario_id, &nombre]
+    );
+    if let Ok(_) = exists {
+        println!("[create_portfolio] Ya existe un portafolio con ese nombre para este usuario.");
+        return Err("Ya existe un portafolio con ese nombre. Por favor, elige otro.".to_string());
+    }
     let id_hex = format!("{:09x}", rand::random::<u32>());
     let row = match client.query_one(
         "INSERT INTO portafolios (id_hex, usuario_id, nombre) VALUES ($1, $2, $3) RETURNING id, nombre, id_hex",
